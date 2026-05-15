@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>신제품 등록 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase Realtime Database (index.html과 동일 SDK) -->
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- Kakao SDK -->
+<script defer src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#ffffff;--surface2:#f0f0f3;--surface3:#e8e8ed;
+  --border:#d1d1d6;--accent:#d4880a;--accent2:#c0621a;--accent3:#2c6fbd;
+  --danger:#c0392b;--success:#1a7d44;
+  --text:#1c1c1e;--text2:#48484a;--text3:#8e8e93;
+  --radius:10px;--radius-sm:6px;
+  --font:'Noto Sans KR',sans-serif;--mono:'DM Mono',monospace;
+  --shadow:0 4px 24px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+
+/* ── HEADER ── */
+header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;height:60px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--border);
+}
+.logo{font-weight:900;font-size:16px;color:var(--accent);letter-spacing:-.4px;white-space:nowrap}
+.logo-sub{font-size:11px;color:var(--text3);margin-left:8px;font-weight:400}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);margin-left:auto;transition:background .3s}
+.sync-dot.ok{background:var(--success);box-shadow:0 0 6px var(--success)}
+.sync-dot.err{background:var(--danger)}
+.sync-label{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:4px}
+.header-nav{display:flex;gap:6px;margin-left:16px}
+.hbtn{background:none;border:none;cursor:pointer;padding:5px 12px;border-radius:var(--radius-sm);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:500;transition:background .15s,color .15s}
+.hbtn:hover{background:var(--surface2);color:var(--text)}
+.hbtn.active{background:var(--accent);color:#fff;font-weight:700}
+
+/* ── LAYOUT ── */
+main{padding:24px;max-width:1180px;margin:0 auto;width:100%}
+.page{display:none}.page.active{display:block}
+.form-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+@media(max-width:900px){.form-layout{grid-template-columns:1fr}}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.card-title{font-size:14px;font-weight:700;letter-spacing:-.2px;color:var(--text)}
+.card-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--accent);color:#fff;font-weight:700;margin-left:6px}
+.new-badge{background:var(--danger)}
+
+/* ── FORM ── */
+label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:600}
+input,select,textarea{
+  width:100%;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 12px;
+  color:var(--text);font-family:var(--font);font-size:14px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,136,10,.12)}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238e8e93' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+select option{background:var(--surface);color:var(--text)}
+.fg{margin-bottom:14px}
+.input-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+@media(max-width:600px){.input-row{grid-template-columns:1fr}}
+.price-wrap{position:relative}
+.price-prefix{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--accent);font-family:var(--mono);font-weight:500;pointer-events:none}
+.price-wrap input{padding-left:26px}
+.required{color:var(--danger);margin-left:2px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;transition:opacity .15s,transform .1s,box-shadow .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(212,136,10,.3)}
+.btn-primary:hover{opacity:.9}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--surface3)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-full{width:100%;justify-content:center;padding:14px;font-size:15px}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 5px;border-radius:4px;transition:background .15s,color .15s}
+.del-btn:hover{background:rgba(192,57,43,.1);color:var(--danger)}
+
+/* ── ALLERGEN GRID ── */
+.allergen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:7px}
+@media(max-width:600px){.allergen-grid{grid-template-columns:repeat(3,1fr)}}
+.atag{display:flex;align-items:center;gap:5px;padding:8px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;user-select:none;color:var(--text2)}
+.atag:hover{border-color:var(--accent2);background:var(--surface2)}
+.atag.on{border-color:var(--danger);background:rgba(192,57,43,.08);color:var(--danger);font-weight:700}
+.atag .dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .15s}
+.atag.on .dot{background:var(--danger)}
+
+/* ── ORIGIN SECTION ── */
+.origin-rows{display:flex;flex-direction:column;gap:12px}
+.origin-row{display:grid;grid-template-columns:44px 1fr 1fr;gap:10px;align-items:start}
+@media(max-width:600px){
+  .origin-row{grid-template-columns:44px 1fr;row-gap:6px}
+  .origin-row .fg:last-child{grid-column:2}
+}
+.origin-rank{font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono);min-width:24px;padding-top:12px}
+.origin-images-wrap{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.origin-img-slot{
+  width:80px;height:80px;border:2px dashed var(--border);border-radius:var(--radius-sm);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s;font-size:10px;color:var(--text3)
+}
+.origin-img-slot:hover{border-color:var(--accent)}
+.origin-img-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.origin-img-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.origin-img-slot .img-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+
+/* ── INGREDIENT TABLE ── */
+.ing-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ing-table{width:100%;border-collapse:collapse;min-width:480px}
+.ing-table th{text-align:left;padding:8px 8px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:700}
+.ing-table td{padding:5px 6px;vertical-align:middle;border-bottom:1px solid var(--surface2)}
+.ing-table tr:hover td{background:var(--surface2)}
+.ing-table input,.ing-table select{padding:6px 8px;font-size:13px;border-color:var(--border)}
+.cost-cell{font-family:var(--mono);font-size:12px;color:var(--accent);text-align:right;white-space:nowrap}
+.total-bar{display:flex;justify-content:flex-end;gap:20px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.total-label{font-size:12px;color:var(--text2)}
+.total-val{font-family:var(--mono);font-size:17px;font-weight:500;color:var(--accent)}
+
+/* ── COST PANEL ── */
+.cost-panel{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.cost-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.cost-row:last-child{border:none}
+.cost-row.total-row{padding-top:10px;margin-top:4px;border-top:2px solid var(--border);border-bottom:none}
+.cost-row.total-row .crv{font-size:18px;color:var(--accent);font-weight:700}
+.crl{font-size:12px;color:var(--text2)}
+.crv{font-family:var(--mono);font-size:13px;color:var(--text)}
+.sell-price-box{font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent);text-align:center;padding:12px;background:rgba(212,136,10,.08);border-radius:8px;margin-top:10px;border:1.5px solid rgba(212,136,10,.2)}
+
+/* ── NOTIFICATION CARD ── */
+.notif-settings{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.notif-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.2px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.notif-title .arrow{font-size:10px;transition:transform .2s;color:var(--text3)}
+.notif-title.open .arrow{transform:rotate(180deg)}
+.notif-body{display:none}
+.notif-body.open{display:block}
+.notif-toggle{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer}
+.sw{width:40px;height:22px;border-radius:11px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0}
+.sw::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw.on{background:var(--accent2)}
+.sw.on::after{transform:translateX(18px)}
+.sw.locked{background:var(--success);pointer-events:none}
+.sw.locked::after{transform:translateX(18px)}
+.notif-label{font-size:13px;color:var(--text);font-weight:500}
+.kakao-required-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(192,57,43,.1);color:var(--danger);font-weight:700;border:1px solid rgba(192,57,43,.2);margin-left:4px}
+
+/* ── RECENT PRODUCTS TABLE ── */
+.recent-table{width:100%;border-collapse:collapse}
+.recent-table th{text-align:left;padding:10px 12px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:700;background:var(--surface2)}
+.recent-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
+.recent-table tr:hover td{background:var(--surface2)}
+.new-chip{font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(192,57,43,.1);color:var(--danger);font-weight:700;margin-left:6px;border:1px solid rgba(192,57,43,.2)}
+.allergen-mini{display:flex;flex-wrap:wrap;gap:3px}
+.a-mini{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.08);color:var(--danger);border:1px solid rgba(192,57,43,.2)}
+.cat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+/* ── TOAST ── */
+#tc{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;box-shadow:var(--shadow);animation:slideIn .2s ease;color:var(--text)}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent3)}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:min(540px,95vw);max-height:85vh;overflow-y:auto;padding:28px;transform:translateY(10px);transition:transform .2s;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:20px;letter-spacing:-.3px;color:var(--text)}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.section-title{font-size:17px;font-weight:700;margin-bottom:16px;letter-spacing:-.3px;color:var(--text)}
+.section-sub{font-size:12px;color:var(--text3);margin-left:8px;font-weight:400}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+.empty .ei{font-size:36px;margin-bottom:10px;opacity:.4}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.highlight{animation:hlt .5s ease}
+@keyframes hlt{0%{background:rgba(212,136,10,.15)}100%{background:transparent}}
+
+/* ── CUSTOM CHECKBOX ── */
+.custom-checkbox-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:8px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);transition:all .15s}
+.custom-checkbox-wrap:hover{border-color:var(--success);background:rgba(26,125,68,.05)}
+.custom-checkbox-wrap.checked{border-color:var(--success);background:rgba(26,125,68,.08)}
+.custom-checkbox-box{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.custom-checkbox-wrap.checked .custom-checkbox-box{background:var(--success);border-color:var(--success)}
+.custom-checkbox-checkmark{display:none;color:#fff;font-size:12px;font-weight:900;line-height:1}
+.custom-checkbox-wrap.checked .custom-checkbox-checkmark{display:block}
+.custom-checkbox-label{font-size:12px;color:var(--text2);font-weight:500;transition:color .15s}
+.custom-checkbox-wrap.checked .custom-checkbox-label{color:var(--success);font-weight:700}
+
+/* ── REQUIRED ERROR STATE ── */
+input.field-error,select.field-error{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(192,57,43,.12)!important}
+.field-error-msg{font-size:11px;color:var(--danger);margin-top:4px;font-weight:500;display:flex;align-items:center;gap:3px}
+
+/* ── TOOLTIP ── */
+.tip-wrap{position:relative;display:inline-flex;align-items:center}
+.tip-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--accent3);color:#fff;font-size:10px;font-weight:700;cursor:help;flex-shrink:0;margin-left:5px;line-height:1;user-select:none}
+.tip-box{
+  visibility:hidden;opacity:0;pointer-events:none;
+  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:#1c1c1e;color:#f0f0f0;
+  font-size:12px;font-weight:400;line-height:1.65;
+  border-radius:10px;padding:12px 14px;width:260px;
+  box-shadow:0 8px 32px rgba(0,0,0,.22);
+  transition:opacity .15s,visibility .15s;
+  z-index:300;word-break:keep-all;
+}
+.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1c1c1e}
+.tip-wrap:hover .tip-box,.tip-wrap:focus-within .tip-box{visibility:visible;opacity:1}
+.tip-box strong{color:var(--accent);font-weight:700}
+.tip-box .tip-ex{margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:#aaa}
+@media(max-width:600px){.tip-box{width:220px;left:auto;right:0;transform:none}.tip-box::after{left:auto;right:14px;transform:none}}
+
+@media(max-width:600px){
+  header{padding:0 16px;gap:10px}
+  .logo-sub{display:none}
+  .hbtn{padding:5px 9px;font-size:11px}
+  main{padding:14px}
+  .card{padding:16px;margin-bottom:12px}
+  .form-layout{gap:14px}
+  .origin-img-slot{width:72px;height:72px}
+  .btn-full{padding:14px;font-size:14px}
+  .ing-table th,.ing-table td{padding:5px 4px}
+  .total-val{font-size:15px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🥐 신제품 등록<span class="logo-sub">전 지점 이름표 통일 · 갤러리아점 원산지 표기 기준</span></div>
+  <nav class="header-nav">
+    <button class="hbtn active" onclick="showPage('register')">➕ 신제품 등록</button>
+    <button class="hbtn" onclick="showPage('history')">📋 등록 이력</button>
+    <button class="hbtn" onclick="showPage('settings')">⚙️ 설정</button>
+  </nav>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+    <div class="sync-dot" id="syncDot"></div>
+    <span class="sync-label" id="syncLabel">연결 중...</span>
+  </div>
+</header>
+
+<div id="tc"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PAGE: 신제품 등록                               -->
+<!-- ═══════════════════════════════════════════════ -->
+<main>
+<div id="page-register" class="page active">
+  <div class="form-layout">
+
+    <!-- ════════ LEFT: FORM ════════ -->
+    <div>
+
+      <!-- 기본 정보 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📝 기본 정보<span class="card-badge">필수</span></div>
+        </div>
+        <div class="input-row">
+          <div class="fg">
+            <label>제품이름 <span class="required">*</span><span style="font-size:10px;color:var(--text3);margin-left:4px">매장 판매 제품과 동일하게 작성</span></label>
+            <input type="text" id="fName" placeholder="예) 크림치즈베이글" oninput="updatePreview()">
+          </div>
+          <div class="fg">
+            <label>카테고리 <span class="required">*</span></label>
+            <select id="fCat" onchange="updatePreview()">
+              <option value="식빵/발효빵/식사빵">식빵/발효빵/식사빵</option>
+              <option value="일반빵" selected>일반빵</option>
+              <option value="케이크/롤/파운드">케이크/롤/파운드</option>
+              <option value="쿠키/정과">쿠키/정과</option>
+              <option value="샌드위치/마카롱/초콜릿/잼/냉장">샌드위치/마카롱/초콜릿/잼/냉장</option>
+              <option value="시즌">시즌</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>판매 금액 <span class="required">*</span></label>
+          <div class="price-wrap">
+            <span class="price-prefix">₩</span>
+            <input type="number" id="fPrice" placeholder="0" min="0" step="100" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="fg">
+          <label>비고 <span style="font-size:10px;color:var(--text3)">(선택)</span></label>
+          <textarea id="fNote" rows="2" placeholder="특이사항, 보관방법 등..."></textarea>
+        </div>
+      </div>
+
+      <!-- 원산지 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌐 원산지 정보<span class="card-badge">필수</span><span class="card-badge" style="background:var(--accent2)">배합표 기준 3순위</span></div>
+          <span style="font-size:11px;color:var(--text3)">갤러리아점 기준</span>
+        </div>
+        <div style="font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:12px;font-weight:500">
+          ⚠️ 1순위 원재료명과 원산지는 반드시 입력해야 합니다
+        </div>
+        <div class="origin-rows">
+          <div class="origin-row">
+            <span class="origin-rank">1순위<span class="required" style="font-size:10px">*</span></span>
+            <div class="fg" style="margin:0">
+              <input type="text" id="origin1-name" placeholder="원재료명 (예: 밀가루)" oninput="updatePreview()">
+            </div>
+            <div class="fg" style="margin:0">
+              <input type="text" id="origin1-country" placeholder="원산지 (예: 미국산)" oninput="updatePreview()">
+            </div>
+          </div>
+          <div class="origin-row">
+            <span class="origin-rank">2순위</span>
+            <div class="fg" style="margin:0">
+              <input type="text" id="origin2-name" placeholder="원재료명" oninput="updatePreview()">
+            </div>
+            <div class="fg" style="margin:0">
+              <input type="text" id="origin2-country" placeholder="원산지" oninput="updatePreview()">
+            </div>
+          </div>
+          <div class="origin-row">
+            <span class="origin-rank">3순위</span>
+            <div class="fg" style="margin:0">
+              <input type="text" id="origin3-name" placeholder="원재료명" oninput="updatePreview()">
+            </div>
+            <div class="fg" style="margin:0">
+              <input type="text" id="origin3-country" placeholder="원산지" oninput="updatePreview()">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <label style="display:flex;align-items:center;gap:0">원산지 증빙 이미지 첨부 <span style="font-size:10px;color:var(--text3);margin-left:4px">(최대 3개 · JPG/PNG)</span>
+            <span class="tip-wrap" id="originImgTipWrap">
+              <span class="tip-icon">?</span>
+              <span class="tip-box" id="originImgTipBox">
+                <strong>원산지 증빙 이미지</strong><br>
+                납품서, 원산지 확인서 등<br>원산지를 증빙할 수 있는 서류를 사진으로 첨부하세요.<br>
+                <span class="tip-ex" id="originGuideImgsArea" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+                  <div style="color:#aaa;font-size:11px;margin-bottom:6px">📎 가이드 이미지</div>
+                  <div id="originGuideImgList" style="display:flex;flex-direction:column;gap:6px"></div>
+                </span>
+              </span>
+            </span>
+          </label>
+          <div class="origin-images-wrap">
+            <div class="origin-img-slot" id="imgSlot0" onclick="triggerImgInput(0)">
+              <span style="font-size:18px;margin-bottom:2px">📷</span>
+              <span>이미지 1</span>
+              <input type="file" accept="image/*" id="imgInput0" onchange="handleOriginImg(0,this)" style="display:none" onclick="event.stopPropagation()">
+            </div>
+            <div class="origin-img-slot" id="imgSlot1" onclick="triggerImgInput(1)">
+              <span style="font-size:18px;margin-bottom:2px">📷</span>
+              <span>이미지 2</span>
+              <input type="file" accept="image/*" id="imgInput1" onchange="handleOriginImg(1,this)" style="display:none" onclick="event.stopPropagation()">
+            </div>
+            <div class="origin-img-slot" id="imgSlot2" onclick="triggerImgInput(2)">
+              <span style="font-size:18px;margin-bottom:2px">📷</span>
+              <span>이미지 3</span>
+              <input type="file" accept="image/*" id="imgInput2" onchange="handleOriginImg(2,this)" style="display:none" onclick="event.stopPropagation()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 알레르기 유발물질 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚠️ 알레르기 유발물질<span class="card-badge">필수</span><span class="card-badge new-badge">중복 선택 가능</span></div>
+          <button class="btn btn-ghost btn-sm" onclick="clearAllergens()">전체 해제</button>
+        </div>
+        <div id="allergenRequiredMsg" style="display:none;font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:10px;font-weight:500">
+          ⚠️ 알레르기 유발물질을 선택하거나, 해당 없음을 확인해주세요
+        </div>
+        <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:7px 10px;margin-bottom:10px">
+          해당 알레르기가 없는 경우 아무것도 선택하지 않고 등록하세요 (자동으로 "없음"으로 처리됩니다)
+        </div>
+        <div class="allergen-grid" id="allergenGrid">
+          <!-- JS로 생성 -->
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:12px;color:var(--text2)">
+            선택됨: <span id="allergenCount" style="color:var(--accent);font-weight:700;font-family:var(--mono)">0</span>개
+          </div>
+          <div class="custom-checkbox-wrap" id="allergenConfirmWrap" onclick="toggleAllergenConfirm()">
+            <input type="checkbox" id="allergenConfirm" style="display:none">
+            <div class="custom-checkbox-box">
+              <span class="custom-checkbox-checkmark">✓</span>
+            </div>
+            <span class="custom-checkbox-label">확인 완료 (알레르기 없음 포함)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 배합표 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧪 배합표 입력<span class="card-badge" style="background:var(--accent3)">원가 자동 계산</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addIngRow()">+ 재료 추가</button>
+        </div>
+
+        <!-- 생산 기본 설정 -->
+        <div class="input-row" style="margin-bottom:14px">
+          <div class="fg" style="margin:0">
+            <label>생산량 (개)</label>
+            <input type="number" id="fQty" value="12" min="1" oninput="calcCosts()">
+          </div>
+          <div class="fg" style="margin:0">
+            <label style="display:flex;align-items:center">
+              오버헤드 <span style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:3px">%</span>
+              <span class="tip-wrap">
+                <span class="tip-icon">?</span>
+                <span class="tip-box">
+                  <strong>오버헤드 (간접비율)</strong><br>
+                  재료비 외에 발생하는 <strong>간접 운영비</strong>를 재료비에 대한 비율로 입력합니다.<br><br>
+                  간접비에 포함되는 항목:<br>
+                  · 인건비 (급여, 4대보험)<br>
+                  · 임대료 · 관리비<br>
+                  · 전기·가스 등 공과금<br>
+                  · 포장재·소모품<br>
+                  · 설비 감가상각비<br><br>
+                  <span class="tip-ex">💡 일반적으로 베이커리는 <strong style="color:#f0c040">10~20%</strong>를 적용합니다.<br>예) 재료비 1,000원 · 오버헤드 15% → 간접비 150원 추가</span>
+                </span>
+              </span>
+            </label>
+            <input type="number" id="fOverhead" value="15" min="0" max="100" oninput="calcCosts()">
+          </div>
+          <div class="fg" style="margin:0">
+            <label style="display:flex;align-items:center">
+              목표 마진 <span style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:3px">%</span>
+              <span class="tip-wrap">
+                <span class="tip-icon">?</span>
+                <span class="tip-box">
+                  <strong>목표 마진 (판매 이익률)</strong><br>
+                  판매가에서 원가가 차지하지 않는 비율, 즉 <strong>이익이 차지하는 비율</strong>입니다.<br><br>
+                  계산 공식:<br>
+                  <strong style="color:#f0c040">판매가 = 원가 ÷ (1 − 마진율)</strong><br><br>
+                  마진율별 판매가 예시 (원가 1,000원 기준):<br>
+                  · 20% → 판매가 <strong style="color:#f0c040">1,250원</strong><br>
+                  · 30% → 판매가 <strong style="color:#f0c040">1,429원</strong><br>
+                  · 40% → 판매가 <strong style="color:#f0c040">1,667원</strong><br>
+                  · 50% → 판매가 <strong style="color:#f0c040">2,000원</strong><br><br>
+                  <span class="tip-ex">💡 베이커리 권장 마진은 <strong style="color:#f0c040">30~45%</strong>입니다.<br>※ 마진율 ≠ 이익률(mark-up). 마진은 판매가 기준입니다.</span>
+                </span>
+              </span>
+            </label>
+            <input type="number" id="fMargin" value="30" min="0" max="95" oninput="calcCosts()">
+          </div>
+        </div>
+
+        <div class="ing-wrap">
+          <table class="ing-table">
+            <thead>
+              <tr>
+                <th style="min-width:120px">원재료명</th>
+                <th style="width:80px">사용량</th>
+                <th style="width:80px">단위</th>
+                <th style="width:90px;text-align:right">단가 (원/kg·L·개)</th>
+                <th style="width:90px;text-align:right">금액</th>
+                <th style="width:32px"></th>
+              </tr>
+            </thead>
+            <tbody id="ingBody"></tbody>
+          </table>
+        </div>
+        <div id="ingEmpty" style="text-align:center;padding:20px;color:var(--text3);font-size:12px">
+          ＋ 재료 추가 버튼을 눌러 배합표를 작성하세요
+        </div>
+        <div class="total-bar">
+          <span class="total-label">재료비 합계</span>
+          <div><span class="total-val" id="rawTotal">0</span> <span style="font-size:11px;color:var(--text2)">원</span></div>
+        </div>
+      </div>
+
+    </div><!-- /form col -->
+
+    <!-- ════════ RIGHT: PANEL ════════ -->
+    <div>
+      <!-- 원가 요약 -->
+      <div class="cost-panel" style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:800;margin-bottom:14px;letter-spacing:-.2px">💰 원가 요약</div>
+        <div class="cost-row"><span class="crl">재료비</span><span class="crv" id="s-raw">0원</span></div>
+        <div class="cost-row"><span class="crl">오버헤드 (<span id="s-ohpct">15</span>%)</span><span class="crv" id="s-oh">0원</span></div>
+        <div class="cost-row"><span class="crl">총 원가</span><span class="crv" id="s-total">0원</span></div>
+        <div class="cost-row"><span class="crl">개당 원가</span><span class="crv" id="s-unit">0원</span></div>
+        <div class="cost-row total-row">
+          <span class="crl" style="font-weight:700;color:var(--text)">마진 적용 권장 판매가</span>
+          <span class="crv" id="s-sell">0원</span>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">개당 마진 <span id="s-mpct">30</span>% 적용</div>
+        <div class="sell-price-box" id="s-final">₩ 0</div>
+      </div>
+
+      <!-- 제품 미리보기 -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header" style="margin-bottom:10px"><div class="card-title" style="font-size:12px">👁 등록 미리보기</div></div>
+        <div id="preview" style="font-size:12px;line-height:1.8;color:var(--text2)">
+          <em style="color:var(--text3)">제품 정보 입력 후 자동 표시됩니다</em>
+        </div>
+      </div>
+
+      <!-- 알림 설정 -->
+      <div class="notif-settings" style="margin-bottom:14px">
+        <div class="notif-title open" id="notifToggle" onclick="toggleNotif()">
+          <span>🔔 알림 설정 <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(192,57,43,.1);color:var(--danger);font-weight:700;border:1px solid rgba(192,57,43,.2)">카카오 필수</span></span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="notif-body open" id="notifBody">
+          <!-- 카카오톡 (기본 ON, 잠금) -->
+          <div style="background:rgba(254,229,0,.08);border:1.5px solid rgba(254,229,0,.4);border-radius:8px;padding:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div class="sw locked" id="kakaoSw"></div>
+              <span class="notif-label">💬 카카오톡 공유 <span class="kakao-required-badge">필수</span></span>
+            </div>
+            <div id="kakaoOpts">
+              <div class="fg" style="margin-bottom:4px"><label>Kakao JS App Key</label><input type="text" id="kakaoKey" placeholder="developers.kakao.com 에서 발급 (32자리)" oninput="updateRegisterBtn()"></div>
+              <div style="font-size:10px;color:var(--text3)">* 등록 완료 후 카카오톡 공유 버튼이 자동 활성화됩니다</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px" onclick="saveNotifSettings()">💾 설정 저장</button>
+        </div>
+      </div>
+
+      <!-- 등록 버튼 -->
+      <button class="btn btn-primary btn-full" id="registerBtn" onclick="registerProduct()" disabled style="opacity:0.4;cursor:not-allowed">
+        ✅ 신제품 등록하기
+      </button>
+      <div id="registerBtnHint" style="margin-top:6px;text-align:center;font-size:11px;color:var(--danger);font-weight:500;min-height:16px"></div>
+      <div style="margin-top:4px;text-align:center;font-size:10px;color:var(--text3)">
+        Firebase에 저장 → index.html 알레르기 리스트 자동 업데이트
+      </div>
+    </div><!-- /panel col -->
+
+  </div><!-- /form-layout -->
+</div><!-- /page-register -->
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PAGE: 등록 이력                                -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="page-history" class="page">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <span class="section-title" style="margin:0;white-space:nowrap">📋 신제품 등록 이력<span class="section-sub">Firebase 실시간 동기화</span></span>
+    <div style="flex:1;min-width:180px;position:relative">
+      <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none">🔍</span>
+      <input type="text" id="historySearch" placeholder="제품명·카테고리·알레르기 검색..."
+        style="padding-left:34px;padding-top:8px;padding-bottom:8px;font-size:13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2)"
+        oninput="filterHistory()">
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+      <span id="historyCount" style="font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap"></span>
+      <button class="btn btn-ghost btn-sm" onclick="clearHistorySearch()">✕ 초기화</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadHistory()">↻ 새로고침</button>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="recent-table">
+      <thead>
+        <tr>
+          <th>제품이름</th>
+          <th>카테고리</th>
+          <th>판매금액</th>
+          <th>원산지 (1순위)</th>
+          <th>알레르기</th>
+          <th>등록일시</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+    <div id="historyEmpty" class="empty" style="display:none"><div class="ei">📋</div>등록된 신제품이 없습니다</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PAGE: 설정                                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="page-settings" class="page">
+
+  <!-- 비밀번호 잠금 오버레이 -->
+  <div id="settingsLock" style="max-width:360px;margin:60px auto 0">
+    <div class="card" style="text-align:center;padding:40px 32px">
+      <div style="font-size:40px;margin-bottom:16px">🔐</div>
+      <div style="font-size:17px;font-weight:800;margin-bottom:6px;color:var(--text)">설정 잠금</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:24px">관리자 비밀번호를 입력하세요</div>
+      <div class="fg">
+        <input type="password" id="settingsPwInput" placeholder="비밀번호 입력"
+          style="text-align:center;font-size:18px;letter-spacing:4px"
+          onkeydown="if(event.key==='Enter')checkSettingsPw()">
+      </div>
+      <div id="settingsPwErr" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-weight:600">⚠️ 비밀번호가 올바르지 않습니다</div>
+      <button class="btn btn-primary btn-full" onclick="checkSettingsPw()">🔓 확인</button>
+    </div>
+  </div>
+
+  <!-- 설정 본문 (잠금 해제 후 표시) -->
+  <div id="settingsContent" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div class="section-title" style="margin:0">⚙️ 설정<span class="section-sub">관리자 전용</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="lockSettings()">🔒 잠금</button>
+    </div>
+
+    <!-- Firebase 설정 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔥 Firebase 설정<span class="card-badge" style="background:var(--accent3)">직원 공유용</span></div>
+        <span id="fbStatusText" style="font-size:12px;color:var(--text3)">확인 중...</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:16px;line-height:1.7">
+        📌 <strong style="color:var(--text)">다른 직원과 공유하는 방법</strong><br>
+        아래 Firebase 설정값을 동일하게 입력하면 모든 기기에서 같은 DB에 연결됩니다.<br>
+        <span style="color:var(--accent3)">console.firebase.google.com</span> → 프로젝트 설정 → 앱에서 값을 확인하세요.
+      </div>
+      <div class="input-row">
+        <div class="fg"><label>Project ID</label><input type="text" id="fbProjectId" placeholder="예: hare-allergen"></div>
+        <div class="fg"><label>API Key</label><input type="text" id="fbApiKey" placeholder="AIzaSy..."></div>
+      </div>
+      <div class="fg"><label>Database URL</label><input type="text" id="fbDbUrl" placeholder="https://프로젝트명-default-rtdb.asia-southeast1.firebasedatabase.app"></div>
+      <div class="input-row">
+        <div class="fg"><label>Auth Domain</label><input type="text" id="fbAuthDomain" placeholder="프로젝트명.firebaseapp.com"></div>
+        <div class="fg"><label>App ID</label><input type="text" id="fbAppId" placeholder="1:000000:web:000000"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn btn-primary btn-sm" onclick="saveFirebaseSettings()">💾 저장 및 재연결</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadDefaultFirebase()">↩ 기본값 복원</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyShareText()">📋 공유 텍스트 복사</button>
+      </div>
+      <div id="fbShareBox" style="display:none;margin-top:14px;background:var(--surface2);border-radius:8px;padding:12px;font-size:11px;font-family:var(--mono);color:var(--text2);white-space:pre-wrap;word-break:break-all;border:1px solid var(--border)"></div>
+    </div>
+
+    <!-- 카카오톡 설정 -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">💬 카카오톡 알림 설정</div></div>
+      <div style="margin-bottom:14px;font-size:12px;color:var(--text3);line-height:1.8">
+        <a href="https://developers.kakao.com" target="_blank" style="color:var(--accent3)">developers.kakao.com</a>에서 앱을 생성하고 JavaScript 앱 키를 입력하세요.<br>
+        등록 완료 후 <strong style="color:var(--text)">카카오톡 공유하기</strong> 버튼이 활성화됩니다.
+      </div>
+      <div class="fg"><label>Kakao JavaScript 앱 키</label><input type="text" id="kakaoKeyMain" placeholder="JavaScript 앱 키 32자리"></div>
+      <button class="btn btn-primary btn-sm" style="margin-top:4px" onclick="saveKakaoSettings()">💾 저장</button>
+    </div>
+
+    <!-- 원산지 증빙 가이드 이미지 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🖼️ 원산지 증빙 가이드 이미지<span class="card-badge" style="background:var(--accent2)">신제품 등록 안내용</span></div>
+        <span style="font-size:11px;color:var(--text3)">최대 5개</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;line-height:1.7">
+        📌 <strong style="color:var(--text)">원산지 증빙 이미지 첨부 방법 안내</strong><br>
+        신제품 등록 시 원산지 증빙 이미지 첨부 방법을 가이드하는 이미지를 여기에 등록하세요.<br>
+        등록된 이미지는 <strong style="color:var(--accent)">신제품 등록 탭</strong>의 원산지 증빙 이미지 첨부 항목 옆 <strong style="color:var(--accent3)">?</strong> 아이콘 툴팁에 반영됩니다.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="guideImgWrap">
+        <!-- JS로 렌더 -->
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="addGuideImgSlot()">+ 가이드 이미지 추가</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearGuideImgs()">🗑 전체 삭제</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 이미지는 브라우저에 저장됩니다 (localStorage)</div>
+    </div>
+
+    <!-- 비밀번호 변경 -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🔑 설정 비밀번호 변경</div></div>
+      <div class="input-row">
+        <div class="fg"><label>새 비밀번호</label><input type="password" id="newPw1" placeholder="새 비밀번호"></div>
+        <div class="fg"><label>비밀번호 확인</label><input type="password" id="newPw2" placeholder="다시 입력"></div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="changeSettingsPw()">🔑 변경</button>
+    </div>
+  </div>
+</div>
+
+</main><!-- /main -->
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 등록 완료 모달                                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="modal-title">🎉 신제품 등록 완료!</div>
+    <div id="successContent" style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:16px"></div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:20px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm)">
+      ✅ <strong style="color:var(--success)">index.html 알레르기 리스트</strong>에 자동 반영되었습니다.
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap">
+      <button class="btn btn-success btn-sm" id="kakaoShareBtn" onclick="doKakaoShare()">💬 카카오톡으로 공유</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeSuccess(); showPage('history')">📋 등록 이력 보기</button>
+      <button class="btn btn-primary btn-sm" onclick="resetForm()">➕ 새 제품 등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────── -->
+<script>
+(function waitForLibs() {
+  if (typeof firebase === 'undefined') return setTimeout(waitForLibs, 30);
+  INIT();
+})();
+
+/* ══════════════════════════════════════════════════ */
+/*  CONSTANTS                                         */
+/* ══════════════════════════════════════════════════ */
+const ALLERGENS = ['계란','우유','메밀','땅콩','대두','밀','고등어','게','새우','돼지고기','복숭아','토마토','아황산류','호두','닭고기','쇠고기','오징어','조개류','잣','꿀','한천','아몬드'];
+const CATS = ['식빵/발효빵/식사빵','일반빵','케이크/롤/파운드','쿠키/정과','샌드위치/마카롱/초콜릿/잼/냉장','시즌'];
+const CAT_COLORS = {'식빵/발효빵/식사빵':'#e8a87c','일반빵':'#85c1e9','케이크/롤/파운드':'#f1948a','쿠키/정과':'#82e0aa','샌드위치/마카롱/초콜릿/잼/냉장':'#c39bd3','시즌':'#f7dc6f'};
+const FB_CFG = {
+  apiKey:'AIzaSyB-1hk5BHsqf70Eo23_YGe5R7lV4_xTh9I',
+  authDomain:'hare-allergen.firebaseapp.com',
+  databaseURL:'https://hare-allergen-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:'hare-allergen',
+  storageBucket:'hare-allergen.firebasestorage.app',
+  messagingSenderId:'988530050491',
+  appId:'1:988530050491:web:7fae0173b5c83f471b709e'
+};
+
+/* ══════════════════════════════════════════════════ */
+/*  STATE                                             */
+/* ══════════════════════════════════════════════════ */
+let db = null;
+let allergenState = {};
+ALLERGENS.forEach(a => allergenState[a] = false);
+let allergenConfirmed = false; // 알레르기 확인 완료 체크
+let originImages = [null, null, null];
+let ingRows = [];
+let rowId = 0;
+let lastRegistered = null;
+let emailOn = false; // (호환성 유지용 더미)
+let kakaoOn = true; // 카카오 기본 ON
+
+/* ══════════════════════════════════════════════════ */
+/*  INIT                                             */
+/* ══════════════════════════════════════════════════ */
+function INIT() {
+  // Firebase 설정: localStorage 저장값 우선, 없으면 기본값
+  const savedFb = getSavedFirebaseCfg();
+  const fbCfg = savedFb || FB_CFG;
+  try {
+    // 'register-app' 고정 이름 사용 → 다른 페이지 Firebase 인스턴스와 충돌 방지
+    const existingApp = firebase.apps.find(a => a.name === 'register-app');
+    const app = existingApp ? existingApp : firebase.initializeApp(fbCfg, 'register-app');
+    db = firebase.database(app);
+    db.ref('.info/connected').on('value', snap => {
+      const ok = snap.val() === true;
+      document.getElementById('syncDot').className = 'sync-dot ' + (ok ? 'ok' : 'err');
+      document.getElementById('syncLabel').textContent = ok ? 'Firebase 연결됨' : '오프라인';
+      const fbSt = document.getElementById('fbStatusText');
+      if (fbSt) fbSt.innerHTML = ok
+        ? '<span style="color:var(--success)">✅ 연결 완료</span>'
+        : '<span style="color:var(--danger)">❌ 연결 실패</span>';
+    });
+  } catch(e) {
+    console.error('Firebase init error', e);
+    toast('Firebase 연결 오류: ' + e.message, 'error');
+  }
+  buildAllergenGrid();
+  // 커스텀 체크박스는 toggleAllergenConfirm() 으로 처리
+  updateRegisterBtn();
+  kakaoOn = true;
+  document.getElementById('kakaoSw').classList.add('locked');
+  document.getElementById('kakaoOpts').style.display = 'block';
+  document.getElementById('notifBody').classList.add('open');
+  document.getElementById('notifToggle').classList.add('open');
+  loadNotifSettings();
+  loadKakaoSettings();
+  loadGuideImages();
+  addIngRow();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  ALLERGEN CONFIRM TOGGLE (커스텀 체크박스)           */
+/* ══════════════════════════════════════════════════ */
+function toggleAllergenConfirm() {
+  const cb   = document.getElementById('allergenConfirm');
+  const wrap = document.getElementById('allergenConfirmWrap');
+  cb.checked = !cb.checked;
+  allergenConfirmed = cb.checked;
+  wrap.classList.toggle('checked', cb.checked);
+  if (cb.checked) document.getElementById('allergenRequiredMsg').style.display = 'none';
+  updateRegisterBtn();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  PAGE NAVIGATION                                   */
+/* ══════════════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const btns = document.querySelectorAll('.hbtn');
+  const map = {register:0, history:1, settings:2};
+  if (map[id] !== undefined) btns[map[id]].classList.add('active');
+  if (id === 'history') loadHistory();
+  if (id === 'settings') { initSettingsPage(); setTimeout(renderGuideImgWrap, 50); }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  ALLERGEN GRID                                     */
+/* ══════════════════════════════════════════════════ */
+function buildAllergenGrid() {
+  const grid = document.getElementById('allergenGrid');
+  grid.innerHTML = '';
+  ALLERGENS.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'atag' + (allergenState[a] ? ' on' : '');
+    div.id = 'atag-' + a;
+    div.innerHTML = `<span class="dot"></span>${a}`;
+    div.onclick = () => toggleAllergen(a);
+    grid.appendChild(div);
+  });
+}
+
+function toggleAllergen(a) {
+  allergenState[a] = !allergenState[a];
+  const el = document.getElementById('atag-' + a);
+  el.classList.toggle('on', allergenState[a]);
+  el.querySelector('.dot').style.background = allergenState[a] ? 'var(--danger)' : 'var(--border)';
+  const cnt = ALLERGENS.filter(x => allergenState[x]).length;
+  document.getElementById('allergenCount').textContent = cnt;
+  updateRegisterBtn();
+  updatePreview();
+}
+
+function clearAllergens() {
+  ALLERGENS.forEach(a => { allergenState[a] = false; });
+  buildAllergenGrid();
+  document.getElementById('allergenCount').textContent = '0';
+  updatePreview();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  ORIGIN IMAGES                                     */
+/* ══════════════════════════════════════════════════ */
+function triggerImgInput(idx) {
+  document.getElementById('imgInput' + idx).click();
+}
+
+function handleOriginImg(idx, inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  resizeImage(file, 600, dataUrl => {
+    originImages[idx] = dataUrl;
+    renderImgSlot(idx, dataUrl);
+    toast('이미지 ' + (idx+1) + ' 첨부됨', 'success');
+  });
+}
+
+function resizeImage(file, maxPx, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImgSlot(idx, dataUrl) {
+  const slot = document.getElementById('imgSlot' + idx);
+  slot.innerHTML = `
+    <img src="${dataUrl}" alt="원산지 이미지 ${idx+1}">
+    <button class="img-del" onclick="removeOriginImg(${idx},event)">✕</button>
+    <input type="file" accept="image/*" id="imgInput${idx}" onchange="handleOriginImg(${idx},this)" style="display:none" onclick="event.stopPropagation()">
+  `;
+}
+
+function removeOriginImg(idx, e) {
+  e.stopPropagation();
+  originImages[idx] = null;
+  const slot = document.getElementById('imgSlot' + idx);
+  slot.innerHTML = `
+    <span style="font-size:18px;margin-bottom:2px">📷</span>
+    <span>이미지 ${idx+1}</span>
+    <input type="file" accept="image/*" id="imgInput${idx}" onchange="handleOriginImg(${idx},this)" style="display:none" onclick="event.stopPropagation()">
+  `;
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  INGREDIENT TABLE (배합표)                         */
+/* ══════════════════════════════════════════════════ */
+function addIngRow() {
+  const id = ++rowId;
+  ingRows.push({ id, name:'', qty:0, unit:'g', unitPrice:0 });
+  renderIngRows();
+}
+
+function removeIngRow(id) {
+  ingRows = ingRows.filter(r => r.id !== id);
+  renderIngRows();
+  calcCosts();
+}
+
+function renderIngRows() {
+  const body = document.getElementById('ingBody');
+  const empty = document.getElementById('ingEmpty');
+  if (ingRows.length === 0) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    calcCosts();
+    return;
+  }
+  empty.style.display = 'none';
+  body.innerHTML = ingRows.map(r => `
+    <tr id="row-${r.id}">
+      <td><input type="text" value="${esc(r.name)}" placeholder="원재료명" oninput="updateRow(${r.id},'name',this.value)"></td>
+      <td><input type="number" value="${r.qty||''}" placeholder="0" min="0" step="1" style="text-align:right" oninput="updateRow(${r.id},'qty',this.value)"></td>
+      <td>
+        <select onchange="updateRow(${r.id},'unit',this.value)">
+          ${['g','kg','ml','L','개','tbsp','tsp','꼬집'].map(u=>`<option${r.unit===u?' selected':''}>${u}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="number" value="${r.unitPrice||''}" placeholder="0" min="0" style="text-align:right" oninput="updateRow(${r.id},'unitPrice',this.value)"></td>
+      <td class="cost-cell" id="cost-${r.id}">0원</td>
+      <td><button class="del-btn" onclick="removeIngRow(${r.id})">✕</button></td>
+    </tr>
+  `).join('');
+  calcCosts();
+}
+
+function updateRow(id, field, val) {
+  const r = ingRows.find(r => r.id === id);
+  if (!r) return;
+  r[field] = field === 'name' ? val : (parseFloat(val) || 0);
+  calcCosts();
+}
+
+function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ══════════════════════════════════════════════════ */
+/*  COST CALCULATION                                  */
+/* ══════════════════════════════════════════════════ */
+const UNIT_TO_KG = { g: 0.001, kg: 1, ml: 0.001, L: 1, 개: 1, tbsp: 0.015, tsp: 0.005, 꼬집: 0.001 };
+
+function calcCosts() {
+  let rawTotal = 0;
+  ingRows.forEach(r => {
+    const factor = UNIT_TO_KG[r.unit] || 1;
+    const cost = r.qty * factor * r.unitPrice;
+    rawTotal += cost;
+    const cell = document.getElementById('cost-' + r.id);
+    if (cell) cell.textContent = fmt(cost) + '원';
+  });
+
+  const qty = Math.max(1, parseFloat(document.getElementById('fQty').value) || 1);
+  const oh = parseFloat(document.getElementById('fOverhead').value) || 0;
+  const mg = parseFloat(document.getElementById('fMargin').value) || 0;
+  const ohAmt = rawTotal * oh / 100;
+  const totalCost = rawTotal + ohAmt;
+  const perUnit = totalCost / qty;
+  const sellPerUnit = mg < 100 ? perUnit / (1 - mg / 100) : 0;
+
+  document.getElementById('rawTotal').textContent = fmt(rawTotal);
+  document.getElementById('s-raw').textContent = fmt(rawTotal) + '원';
+  document.getElementById('s-oh').textContent = fmt(ohAmt) + '원';
+  document.getElementById('s-ohpct').textContent = oh;
+  document.getElementById('s-total').textContent = fmt(totalCost) + '원';
+  document.getElementById('s-unit').textContent = fmt(perUnit) + '원';
+  document.getElementById('s-sell').textContent = fmt(sellPerUnit * qty) + '원';
+  document.getElementById('s-mpct').textContent = mg;
+  document.getElementById('s-final').textContent = '₩ ' + fmt(Math.round(sellPerUnit / 100) * 100);
+}
+
+function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+
+/* ══════════════════════════════════════════════════ */
+/*  REGISTER BUTTON ENABLE/DISABLE                    */
+/* ══════════════════════════════════════════════════ */
+function updateRegisterBtn() {
+  const name    = document.getElementById('fName').value.trim();
+  const price   = parseFloat(document.getElementById('fPrice').value) || 0;
+  const o1name  = document.getElementById('origin1-name').value.trim();
+  const o1cntry = document.getElementById('origin1-country').value.trim();
+  const allergenSelected = ALLERGENS.some(a => allergenState[a]);
+  const allergenConfirmedChk = document.getElementById('allergenConfirm').checked;
+  const kakaoKeyVal = (document.getElementById('kakaoKey').value||'').trim();
+
+  const ready = name && price > 0 && o1name && o1cntry && (allergenSelected || allergenConfirmedChk) && kakaoKeyVal;
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '' : '0.4';
+  btn.style.cursor  = ready ? '' : 'not-allowed';
+
+  // 미충족 항목 힌트 업데이트
+  const hintEl = document.getElementById('registerBtnHint');
+  if (!hintEl) return;
+  if (ready) { hintEl.textContent = ''; return; }
+  const missing = [];
+  if (!name)   missing.push('제품이름');
+  if (price <= 0) missing.push('판매 금액');
+  if (!o1name || !o1cntry) missing.push('원산지 1순위');
+  if (!allergenSelected && !allergenConfirmedChk) missing.push('알레르기 확인');
+  if (!kakaoKeyVal) missing.push('카카오 앱 키');
+  hintEl.textContent = '미입력: ' + missing.join(', ');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  PREVIEW                                           */
+/* ══════════════════════════════════════════════════ */
+function updatePreview() {
+  const name = document.getElementById('fName').value.trim();
+  const cat = document.getElementById('fCat').value;
+  const price = document.getElementById('fPrice').value;
+  const o1n = document.getElementById('origin1-name').value.trim();
+  const o1c = document.getElementById('origin1-country').value.trim();
+  const selected = ALLERGENS.filter(a => allergenState[a]);
+
+  updateRegisterBtn();
+
+  if (!name) {
+    document.getElementById('preview').innerHTML = '<em style="color:var(--text3)">제품이름을 입력하면 미리보기가 표시됩니다</em>';
+    return;
+  }
+
+  const catColor = CAT_COLORS[cat] || '#bdc3c7';
+  const allergenHtml = selected.length > 0
+    ? selected.map(a => `<span class="a-mini">${a}</span>`).join('')
+    : '<span style="color:var(--text3);font-size:11px">해당 없음</span>';
+
+  document.getElementById('preview').innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <strong style="color:var(--text);font-size:14px">${name}</strong>
+      <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:${catColor}33;color:${catColor};border:1px solid ${catColor}55">${cat}</span>
+    </div>
+    ${price ? `<div>💰 <strong style="color:var(--accent);font-family:var(--mono)">₩${Number(price).toLocaleString('ko-KR')}</strong></div>` : ''}
+    ${o1n && o1c ? `<div style="margin-top:4px">🌐 <strong style="color:var(--text)">${o1n}</strong> — ${o1c}</div>` : ''}
+    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px" class="allergen-mini">${allergenHtml}</div>
+  `;
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  REGISTER PRODUCT                                  */
+/* ══════════════════════════════════════════════════ */
+async function registerProduct() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { toast('제품이름을 입력해주세요', 'error'); document.getElementById('fName').focus(); document.getElementById('fName').classList.add('field-error'); return; }
+  document.getElementById('fName').classList.remove('field-error');
+
+  const cat = document.getElementById('fCat').value;
+  const price = parseFloat(document.getElementById('fPrice').value) || 0;
+  if (price <= 0) { toast('판매 금액을 입력해주세요', 'error'); document.getElementById('fPrice').focus(); document.getElementById('fPrice').classList.add('field-error'); return; }
+  document.getElementById('fPrice').classList.remove('field-error');
+
+  // ── 원산지 필수 검증 ──
+  const o1name = document.getElementById('origin1-name').value.trim();
+  const o1country = document.getElementById('origin1-country').value.trim();
+  if (!o1name || !o1country) {
+    toast('원산지 1순위 원재료명과 원산지를 입력해주세요', 'error');
+    if (!o1name) { document.getElementById('origin1-name').classList.add('field-error'); document.getElementById('origin1-name').focus(); }
+    else { document.getElementById('origin1-country').classList.add('field-error'); document.getElementById('origin1-country').focus(); }
+    document.querySelector('.card:nth-of-type(2)').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  document.getElementById('origin1-name').classList.remove('field-error');
+  document.getElementById('origin1-country').classList.remove('field-error');
+
+  // ── 알레르기 필수 확인 ──
+  const selectedAllergens = ALLERGENS.filter(a => allergenState[a]);
+  const confirmed = document.getElementById('allergenConfirm').checked;
+  if (selectedAllergens.length === 0 && !confirmed) {
+    document.getElementById('allergenRequiredMsg').style.display = 'block';
+    toast('알레르기 유발물질을 선택하거나 "확인 완료"를 체크해주세요', 'error');
+    document.getElementById('allergenRequiredMsg').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  document.getElementById('allergenRequiredMsg').style.display = 'none';
+
+  // ── 카카오 키 확인 ──
+  const kakaoKeyVal = document.getElementById('kakaoKey').value.trim();
+  if (!kakaoKeyVal) {
+    toast('카카오 JS 앱 키를 입력해주세요 (알림 설정)', 'error');
+    document.getElementById('kakaoKey').classList.add('field-error');
+    document.getElementById('kakaoKey').focus();
+    return;
+  }
+  document.getElementById('kakaoKey').classList.remove('field-error');
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 등록 중...';
+
+  try {
+    const id = 'new_' + Date.now();
+    const now = new Date();
+    const dateStr = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+    // 원산지 정보
+    const origin = [
+      { rank:1, name:document.getElementById('origin1-name').value.trim(), country:document.getElementById('origin1-country').value.trim() },
+      { rank:2, name:document.getElementById('origin2-name').value.trim(), country:document.getElementById('origin2-country').value.trim() },
+      { rank:3, name:document.getElementById('origin3-name').value.trim(), country:document.getElementById('origin3-country').value.trim() },
+    ].filter(o => o.name || o.country);
+
+    // 배합표
+    const recipe = ingRows.filter(r => r.name).map(r => ({
+      name: r.name, qty: r.qty, unit: r.unit, unitPrice: r.unitPrice,
+      cost: Math.round(r.qty * (UNIT_TO_KG[r.unit]||1) * r.unitPrice)
+    }));
+
+    // index.html과 동일한 product 구조 생성
+    const product = {
+      _id: id,
+      _newProduct: true,
+      제품이름: name,
+      카테고리: cat,
+      판매금액: price,
+      원산지: origin,
+      원산지이미지: originImages.filter(Boolean),
+      배합표: recipe,
+      비고: document.getElementById('fNote').value.trim(),
+      등록일시: dateStr,
+      등록상태: '신제품',
+    };
+
+    // 알레르기 필드 (index.html 포맷과 동일)
+    ALLERGENS.forEach(a => { product[a] = allergenState[a] ? 'Yes' : 'No'; });
+
+    if (!db) throw new Error('Firebase 미연결');
+    await db.ref('products/' + id).set(product);
+
+    lastRegistered = product;
+    toast('✅ ' + name + ' 등록 완료! index.html에 자동 반영됩니다.', 'success');
+    showSuccessModal(product);
+    setupKakaoShare(product);
+
+  } catch(e) {
+    console.error(e);
+    toast('등록 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.style.cursor = '';
+    btn.innerHTML = '✅ index.html에 신제품 등록하기';
+    updateRegisterBtn();
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  SUCCESS MODAL                                     */
+/* ══════════════════════════════════════════════════ */
+function showSuccessModal(p) {
+  const selected = ALLERGENS.filter(a => p[a] === 'Yes');
+  const allergenStr = selected.length > 0 ? selected.join(', ') : '없음';
+  const originStr = (p.원산지||[]).map(o=>`${o.rank}순위: ${o.name} (${o.country})`).join(' / ') || '미입력';
+
+  document.getElementById('successContent').innerHTML = `
+    <div style="margin-bottom:8px"><strong style="color:var(--text)">${p.제품이름}</strong> &nbsp;
+      <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:${(CAT_COLORS[p.카테고리]||'#ccc')}33;color:${CAT_COLORS[p.카테고리]||'#ccc'}">${p.카테고리}</span>
+    </div>
+    <div>💰 판매가: <strong style="color:var(--accent);font-family:var(--mono)">₩${Number(p.판매금액||0).toLocaleString('ko-KR')}</strong></div>
+    <div style="margin-top:4px">🌐 원산지: ${originStr}</div>
+    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px">
+      ${selected.map(a=>`<span class="a-mini">${a}</span>`).join('') || '<span style="color:var(--text3);font-size:11px">알레르기 없음</span>'}
+    </div>
+  `;
+
+  const kBtn = document.getElementById('kakaoShareBtn');
+  kBtn.style.display = 'inline-flex'; // 항상 표시
+
+  document.getElementById('successModal').classList.add('open');
+}
+
+function closeSuccess() {
+  document.getElementById('successModal').classList.remove('open');
+}
+
+function resetForm() {
+  closeSuccess();
+  document.getElementById('fName').value = '';
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fNote').value = '';
+  ['origin1-name','origin1-country','origin2-name','origin2-country','origin3-name','origin3-country'].forEach(id => document.getElementById(id).value = '');
+  originImages = [null,null,null];
+  for(let i=0;i<3;i++) {
+    const s = document.getElementById('imgSlot'+i);
+    s.innerHTML = `<span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 ${i+1}</span><input type="file" accept="image/*" id="imgInput${i}" onchange="handleOriginImg(${i},this)" style="display:none" onclick="event.stopPropagation()">`;
+  }
+  clearAllergens();
+  allergenConfirmed = false;
+  document.getElementById('allergenConfirm').checked = false;
+  document.getElementById('allergenConfirmWrap').classList.remove('checked');
+  document.getElementById('allergenRequiredMsg').style.display = 'none';
+  // 입력 오류 상태 초기화
+  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+  ingRows = [];
+  renderIngRows();
+  addIngRow();
+  calcCosts();
+  document.getElementById('fQty').value = 12;
+  document.getElementById('fOverhead').value = 15;
+  document.getElementById('fMargin').value = 30;
+  updatePreview();
+  updateRegisterBtn();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  HISTORY                                           */
+/* ══════════════════════════════════════════════════ */
+let historyCache = []; // 전체 데이터 캐시
+
+async function loadHistory() {
+  if (!db) { toast('Firebase 미연결', 'error'); return; }
+  const tbody = document.getElementById('historyBody');
+  const empty = document.getElementById('historyEmpty');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">⏳ 불러오는 중...</td></tr>';
+  empty.style.display = 'none';
+  document.getElementById('historyCount').textContent = '';
+
+  try {
+    const snap = await db.ref('products').orderByChild('_newProduct').equalTo(true).get();
+    const val = snap.val();
+    if (!val) {
+      historyCache = [];
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    historyCache = Object.values(val).sort((a,b) => {
+      const ta = a._id ? a._id.replace('new_','') : '0';
+      const tb = b._id ? b._id.replace('new_','') : '0';
+      return parseInt(tb) - parseInt(ta);
+    });
+    filterHistory();
+  } catch(e) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    toast('불러오기 실패: ' + e.message, 'error');
+  }
+}
+
+function filterHistory() {
+  const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
+  const filtered = q
+    ? historyCache.filter(p => {
+        const allergens = ALLERGENS.filter(a => p[a] === 'Yes').join(' ');
+        const origin = (p.원산지||[]).map(o=>o.name+' '+o.country).join(' ');
+        return (p.제품이름||'').toLowerCase().includes(q)
+          || (p.카테고리||'').toLowerCase().includes(q)
+          || allergens.toLowerCase().includes(q)
+          || origin.toLowerCase().includes(q);
+      })
+    : historyCache;
+
+  const tbody = document.getElementById('historyBody');
+  const empty = document.getElementById('historyEmpty');
+  const countEl = document.getElementById('historyCount');
+
+  if (historyCache.length > 0) {
+    countEl.textContent = q
+      ? `${filtered.length} / ${historyCache.length}건`
+      : `총 ${historyCache.length}건`;
+  } else {
+    countEl.textContent = '';
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    empty.innerHTML = q
+      ? `<div class="ei">🔍</div>"${q}" 검색 결과가 없습니다`
+      : `<div class="ei">📋</div>등록된 신제품이 없습니다`;
+    return;
+  }
+
+  empty.style.display = 'none';
+  tbody.innerHTML = filtered.map(p => {
+    const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
+    const origin1 = p.원산지 && p.원산지[0] ? `${p.원산지[0].name}/${p.원산지[0].country}` : '-';
+    const catColor = CAT_COLORS[p.카테고리] || '#ccc';
+    return `<tr>
+      <td>
+        <strong>${highlight(p.제품이름||'', q)}</strong>
+        <span class="new-chip">신제품</span>
+      </td>
+      <td>
+        <span class="cat-dot" style="background:${catColor}"></span>${highlight(p.카테고리||'-', q)}
+      </td>
+      <td style="font-family:var(--mono);color:var(--accent)">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</td>
+      <td style="font-size:12px;color:var(--text2)">${origin1}</td>
+      <td>
+        <div class="allergen-mini">
+          ${allergens.length > 0 ? allergens.map(a=>`<span class="a-mini">${highlight(a,q)}</span>`).join('') : '<span style="font-size:11px;color:var(--text3)">없음</span>'}
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap">${p.등록일시||'-'}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${esc(p.제품이름)}')">삭제</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function highlight(text, q) {
+  if (!q || !text) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx)
+    + `<mark style="background:rgba(212,136,10,.25);color:var(--text);border-radius:2px;padding:0 1px">${text.slice(idx, idx+q.length)}</mark>`
+    + text.slice(idx + q.length);
+}
+
+function clearHistorySearch() {
+  document.getElementById('historySearch').value = '';
+  filterHistory();
+  document.getElementById('historySearch').focus();
+}
+
+async function deleteProduct(id, name) {
+  if (!confirm(`"${name}"을(를) 삭제할까요?\nindex.html에서도 제거됩니다.`)) return;
+  try {
+    await db.ref('products/' + id).remove();
+    toast(name + ' 삭제됨', 'success');
+    loadHistory();
+  } catch(e) {
+    toast('삭제 실패: ' + e.message, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  NOTIFICATION SETTINGS                             */
+/* ══════════════════════════════════════════════════ */
+function toggleNotif() {
+  const body = document.getElementById('notifBody');
+  const title = document.getElementById('notifToggle');
+  body.classList.toggle('open');
+  title.classList.toggle('open');
+}
+
+function toggleSwitch(swId, optsId) {
+  if (swId === 'kakaoSw') return;
+  const sw = document.getElementById(swId);
+  const opts = document.getElementById(optsId);
+  const isOn = sw.classList.toggle('on');
+  opts.style.display = isOn ? 'block' : 'none';
+  saveNotifState();
+}
+
+function saveNotifState() {
+  localStorage.setItem('reg_notif', JSON.stringify({
+    kakaoOn: true,
+    kakaoKey: document.getElementById('kakaoKey').value
+  }));
+}
+
+function saveNotifSettings() {
+  saveNotifState();
+  toast('알림 설정 저장됨', 'success');
+}
+
+function loadNotifSettings() {
+  try {
+    const d = JSON.parse(localStorage.getItem('reg_notif') || '{}');
+    kakaoOn = true;
+    document.getElementById('kakaoSw').classList.add('locked');
+    document.getElementById('kakaoOpts').style.display = 'block';
+    if (d.kakaoKey) document.getElementById('kakaoKey').value = d.kakaoKey;
+  } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  SETTINGS PASSWORD                                 */
+/* ══════════════════════════════════════════════════ */
+const SETTINGS_PW_KEY = 'reg_settings_pw';
+const DEFAULT_PW = 'hare';
+
+function getSettingsPw() {
+  return localStorage.getItem(SETTINGS_PW_KEY) || DEFAULT_PW;
+}
+
+function initSettingsPage() {
+  // 이미 해제 상태면 유지
+  if (document.getElementById('settingsContent').style.display === 'block') {
+    loadFirebaseSettingsInputs();
+    loadKakaoSettingsInput();
+    return;
+  }
+  document.getElementById('settingsLock').style.display = 'block';
+  document.getElementById('settingsContent').style.display = 'none';
+  document.getElementById('settingsPwInput').value = '';
+  document.getElementById('settingsPwErr').style.display = 'none';
+  setTimeout(() => document.getElementById('settingsPwInput').focus(), 100);
+}
+
+function checkSettingsPw() {
+  const val = document.getElementById('settingsPwInput').value;
+  if (val === getSettingsPw()) {
+    document.getElementById('settingsLock').style.display = 'none';
+    document.getElementById('settingsContent').style.display = 'block';
+    loadFirebaseSettingsInputs();
+    loadKakaoSettingsInput();
+    document.getElementById('settingsPwErr').style.display = 'none';
+  } else {
+    document.getElementById('settingsPwErr').style.display = 'block';
+    document.getElementById('settingsPwInput').value = '';
+    document.getElementById('settingsPwInput').focus();
+  }
+}
+
+function lockSettings() {
+  document.getElementById('settingsContent').style.display = 'none';
+  document.getElementById('settingsLock').style.display = 'block';
+  document.getElementById('settingsPwInput').value = '';
+  document.getElementById('settingsPwErr').style.display = 'none';
+}
+
+function changeSettingsPw() {
+  const p1 = document.getElementById('newPw1').value;
+  const p2 = document.getElementById('newPw2').value;
+  if (!p1) { toast('새 비밀번호를 입력해주세요', 'error'); return; }
+  if (p1 !== p2) { toast('비밀번호가 일치하지 않습니다', 'error'); return; }
+  localStorage.setItem(SETTINGS_PW_KEY, p1);
+  document.getElementById('newPw1').value = '';
+  document.getElementById('newPw2').value = '';
+  toast('✅ 비밀번호가 변경되었습니다', 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  FIREBASE SETTINGS                                 */
+/* ══════════════════════════════════════════════════ */
+function getSavedFirebaseCfg() {
+  try {
+    const s = JSON.parse(localStorage.getItem('reg_firebase_cfg') || 'null');
+    if (s && s.apiKey && s.databaseURL) return s;
+  } catch(e) {}
+  return null;
+}
+
+function loadFirebaseSettingsInputs() {
+  const cfg = getSavedFirebaseCfg() || FB_CFG;
+  document.getElementById('fbProjectId').value = cfg.projectId || '';
+  document.getElementById('fbApiKey').value    = cfg.apiKey || '';
+  document.getElementById('fbDbUrl').value     = cfg.databaseURL || '';
+  document.getElementById('fbAuthDomain').value= cfg.authDomain || '';
+  document.getElementById('fbAppId').value     = cfg.appId || '';
+  document.getElementById('fbShareBox').style.display = 'none';
+}
+
+function saveFirebaseSettings() {
+  const cfg = {
+    apiKey:           document.getElementById('fbApiKey').value.trim(),
+    authDomain:       document.getElementById('fbAuthDomain').value.trim(),
+    databaseURL:      document.getElementById('fbDbUrl').value.trim(),
+    projectId:        document.getElementById('fbProjectId').value.trim(),
+    storageBucket:    (document.getElementById('fbProjectId').value.trim()) + '.firebasestorage.app',
+    appId:            document.getElementById('fbAppId').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.databaseURL || !cfg.projectId) {
+    toast('Project ID, API Key, Database URL는 필수입니다', 'error'); return;
+  }
+  localStorage.setItem('reg_firebase_cfg', JSON.stringify(cfg));
+  toast('✅ Firebase 설정 저장됨 — 페이지를 새로고침하면 반영됩니다', 'success');
+}
+
+function loadDefaultFirebase() {
+  if (!confirm('기본 Firebase 설정(hare-allergen)으로 복원할까요?')) return;
+  localStorage.removeItem('reg_firebase_cfg');
+  loadFirebaseSettingsInputs();
+  toast('기본값으로 복원됨', 'success');
+}
+
+function copyShareText() {
+  const cfg = getSavedFirebaseCfg() || FB_CFG;
+  const text =
+`[신제품 등록 시스템 · Firebase 설정]
+Project ID  : ${cfg.projectId}
+API Key     : ${cfg.apiKey}
+Database URL: ${cfg.databaseURL}
+Auth Domain : ${cfg.authDomain}
+App ID      : ${cfg.appId}
+
+▶ 설정 탭에서 위 값을 입력하고 [저장 및 재연결] 클릭`;
+
+  const box = document.getElementById('fbShareBox');
+  box.textContent = text;
+  box.style.display = 'block';
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => toast('📋 공유 텍스트가 복사되었습니다', 'success'));
+  } else {
+    toast('위 텍스트를 복사하여 직원에게 전달하세요', 'info');
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  KAKAO SETTINGS (설정 탭)                          */
+/* ══════════════════════════════════════════════════ */
+function loadKakaoSettingsInput() {
+  try {
+    const key = localStorage.getItem('reg_kakao_key');
+    if (key) document.getElementById('kakaoKeyMain').value = key;
+  } catch(e) {}
+}
+
+function saveKakaoSettings() {
+  const key = document.getElementById('kakaoKeyMain').value.trim();
+  localStorage.setItem('reg_kakao_key', key);
+  if (key && window.Kakao && !Kakao.isInitialized()) {
+    try { Kakao.init(key); } catch(e) {}
+  }
+  toast('카카오 설정 저장됨', 'success');
+}
+
+function loadKakaoSettings() {
+  try {
+    const key = localStorage.getItem('reg_kakao_key');
+    if (key) {
+      document.getElementById('kakaoKeyMain').value = key;
+      (function tryKakao() {
+        if (window.Kakao && !Kakao.isInitialized()) {
+          try { Kakao.init(key); } catch(e) {}
+        } else if (!window.Kakao) setTimeout(tryKakao, 500);
+      })();
+    }
+  } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  KAKAOTALK SHARE                                   */
+/* ══════════════════════════════════════════════════ */
+let kakaoShareData = null;
+
+function setupKakaoShare(product) {
+  kakaoShareData = product;
+}
+
+function doKakaoShare() {
+  if (!kakaoShareData) return;
+  const p = kakaoShareData;
+  const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
+  const allergenStr = allergens.length > 0 ? allergens.join(', ') : '없음';
+  const originStr = (p.원산지||[]).map(o=>`${o.rank}순위 ${o.name}(${o.country})`).join(' / ') || '미입력';
+  const msgText = `🥐 신제품 등록 알림\n\n제품명: ${p.제품이름}\n카테고리: ${p.카테고리}\n판매가: ₩${Number(p.판매금액||0).toLocaleString('ko-KR')}\n\n원산지: ${originStr}\n알레르기: ${allergenStr}\n\n등록일시: ${p.등록일시}`;
+
+  if (window.Kakao && Kakao.isInitialized()) {
+    try {
+      Kakao.Share.sendDefault({
+        objectType: 'text',
+        text: msgText,
+        link: { mobileWebUrl: location.href, webUrl: location.href }
+      });
+    } catch(e) {
+      fallbackKakao(msgText);
+    }
+  } else {
+    fallbackKakao(msgText);
+  }
+}
+
+function fallbackKakao(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('📋 클립보드에 복사됨! 카카오톡에 붙여넣기 하세요.', 'info');
+    });
+  }
+  const url = 'https://open.kakao.com/';
+  window.open(url, '_blank');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  GUIDE IMAGES (설정 탭 - 원산지 증빙 가이드)         */
+/* ══════════════════════════════════════════════════ */
+const GUIDE_IMG_KEY = 'reg_origin_guide_imgs';
+let guideImages = []; // [{dataUrl, name}]
+
+function loadGuideImages() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(GUIDE_IMG_KEY) || '[]');
+    guideImages = Array.isArray(saved) ? saved : [];
+  } catch(e) { guideImages = []; }
+  renderGuideImgWrap();
+  renderOriginTipGuideImgs();
+}
+
+function renderGuideImgWrap() {
+  const wrap = document.getElementById('guideImgWrap');
+  if (!wrap) return;
+  if (guideImages.length === 0) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:16px 0">등록된 가이드 이미지가 없습니다</div>';
+    return;
+  }
+  wrap.innerHTML = guideImages.map((g, i) => `
+    <div style="position:relative;width:110px;flex-shrink:0">
+      <img src="${g.dataUrl}" alt="가이드 이미지 ${i+1}"
+        style="width:110px;height:110px;object-fit:cover;border-radius:var(--radius-sm);border:1.5px solid var(--border);cursor:pointer"
+        onclick="viewGuideImg(${i})">
+      <button onclick="removeGuideImg(${i})"
+        style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name || '이미지 '+(i+1)}</div>
+    </div>
+  `).join('');
+}
+
+function renderOriginTipGuideImgs() {
+  const area = document.getElementById('originGuideImgsArea');
+  const list = document.getElementById('originGuideImgList');
+  if (!area || !list) return;
+  if (guideImages.length === 0) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  list.innerHTML = guideImages.map((g, i) => `
+    <img src="${g.dataUrl}" alt="가이드 ${i+1}"
+      style="max-width:220px;border-radius:6px;border:1px solid rgba(255,255,255,.15)">
+  `).join('');
+}
+
+function addGuideImgSlot() {
+  if (guideImages.length >= 5) { toast('가이드 이미지는 최대 5개까지 등록 가능합니다', 'error'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = function() {
+    const file = inp.files[0];
+    if (!file) return;
+    resizeImage(file, 800, dataUrl => {
+      guideImages.push({ dataUrl, name: file.name });
+      saveGuideImages();
+      renderGuideImgWrap();
+      renderOriginTipGuideImgs();
+      toast('가이드 이미지 추가됨', 'success');
+    });
+  };
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(() => inp.remove(), 3000);
+}
+
+function removeGuideImg(idx) {
+  if (!confirm('이 가이드 이미지를 삭제할까요?')) return;
+  guideImages.splice(idx, 1);
+  saveGuideImages();
+  renderGuideImgWrap();
+  renderOriginTipGuideImgs();
+  toast('삭제됨', 'success');
+}
+
+function clearGuideImgs() {
+  if (!confirm('모든 가이드 이미지를 삭제할까요?')) return;
+  guideImages = [];
+  saveGuideImages();
+  renderGuideImgWrap();
+  renderOriginTipGuideImgs();
+  toast('전체 삭제됨', 'success');
+}
+
+function saveGuideImages() {
+  try { localStorage.setItem(GUIDE_IMG_KEY, JSON.stringify(guideImages)); } catch(e) {
+    toast('저장 실패 (용량 초과일 수 있습니다)', 'error');
+  }
+}
+
+function viewGuideImg(idx) {
+  const g = guideImages[idx];
+  if (!g) return;
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.innerHTML = `<img src="${g.dataUrl}" style="max-width:90vw;max-height:90vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)">`;
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  TOAST                                             */
+/* ══════════════════════════════════════════════════ */
+function toast(msg, type = 'success') {
+  const tc = document.getElementById('tc');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  tc.appendChild(t);
+  setTimeout(() => t.style.opacity = '0', 2800);
+  setTimeout(() => t.remove(), 3200);
+}
+</script>
+</body>
+</html>
