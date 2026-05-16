@@ -1,15 +1,13 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>신제품 등록 시스템</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- Firebase Realtime Database (index.html과 동일 SDK) -->
 <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<!-- Kakao SDK 제거됨 -->
-<!-- 카카오 SDK 제거됨 -->
 
 <style>
 :root{
@@ -158,7 +156,7 @@ select option{background:var(--surface);color:var(--text)}
 .sw.locked::after{transform:translateX(18px)}
 .notif-label{font-size:13px;color:var(--text);font-weight:500}
 
-/* ── RECENT PRODUCTS TABLE ── */
+/* ── RECENT PRODUCTS TABLE (데스크탑) ── */
 .recent-table{width:100%;border-collapse:collapse}
 .recent-table th{text-align:left;padding:10px 12px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:700;background:var(--surface2)}
 .recent-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
@@ -167,6 +165,67 @@ select option{background:var(--surface);color:var(--text)}
 .allergen-mini{display:flex;flex-wrap:wrap;gap:3px}
 .a-mini{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.08);color:var(--danger);border:1px solid rgba(192,57,43,.2)}
 .cat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+/* ── 제품명 클릭 링크 ── */
+.product-name-link{
+  cursor:pointer;color:var(--accent);font-weight:700;
+  text-decoration:underline dotted;text-underline-offset:3px;
+  transition:color .15s;
+}
+.product-name-link:hover{color:var(--accent2)}
+
+/* ── 모바일 카드 리스트 (등록 이력) ── */
+.history-card-list{display:none;flex-direction:column;gap:10px}
+.history-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  cursor:pointer;transition:box-shadow .15s,border-color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.history-card:active{box-shadow:0 2px 12px rgba(212,136,10,.15);border-color:rgba(212,136,10,.4)}
+.hc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.hc-name{font-size:15px;font-weight:700;color:var(--accent);line-height:1.3;word-break:keep-all}
+.hc-price{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0}
+.hc-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.hc-cat{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.hc-origin{font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hc-allergens{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px}
+.hc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.hc-date{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.hc-hint{font-size:11px;color:var(--text3)}
+
+/* 모바일에서 테이블 숨기고 카드 표시 */
+@media(max-width:640px){
+  .history-table-wrap{display:none}
+  .history-card-list{display:flex}
+}
+@media(min-width:641px){
+  .history-table-wrap{display:block}
+  .history-card-list{display:none}
+}
+
+/* ── 상세 모달 ── */
+.detail-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.detail-section:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.detail-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;gap:12px}
+.detail-key{font-size:12px;color:var(--text3);font-weight:600;white-space:nowrap;flex-shrink:0;min-width:72px}
+.detail-val{font-size:13px;color:var(--text);font-weight:500;text-align:right;word-break:keep-all}
+.detail-allergen-wrap{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.detail-origin-line{font-size:12px;color:var(--text2);line-height:1.8}
+.detail-imgs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.detail-imgs img{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:zoom-in}
+
+/* ── 수정 모달 ── */
+.edit-origin-row{display:grid;grid-template-columns:40px 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.edit-origin-rank{font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+@media(max-width:500px){
+  .edit-origin-row{grid-template-columns:40px 1fr;row-gap:4px}
+  .edit-origin-row .fg-edit:last-child{grid-column:2}
+}
+.edit-allergen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-top:8px}
+@media(max-width:500px){.edit-allergen-grid{grid-template-columns:repeat(3,1fr)}}
 
 /* ── TOAST ── */
 #tc{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
@@ -243,6 +302,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   .total-val{font-size:15px}
 }
 </style>
+
 </head>
 <body>
 
@@ -261,17 +321,10 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
 
 <div id="tc"></div>
 
-<!-- ═══════════════════════════════════════════════ -->
-<!-- PAGE: 신제품 등록                               -->
-<!-- ═══════════════════════════════════════════════ -->
 <main>
 <div id="page-register" class="page active">
   <div class="form-layout">
-
-    <!-- ════════ LEFT: FORM ════════ -->
     <div>
-
-      <!-- 기본 정보 -->
       <div class="card">
         <div class="card-header">
           <div class="card-title">📝 기본 정보<span class="card-badge">필수</span></div>
@@ -306,233 +359,172 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
         </div>
       </div>
 
-      <!-- 원산지 -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🌐 원산지 정보<span class="card-badge">필수</span><span class="card-badge" style="background:var(--accent2)">배합표 기준 3순위</span></div>
-          <span style="font-size:11px;color:var(--text3)">갤러리아점 기준</span>
-        </div>
-        <div style="font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:12px;font-weight:500">
-          ⚠️ 1순위 원재료명과 원산지는 반드시 입력해야 합니다
-        </div>
-        <div class="origin-rows">
-          <div class="origin-row">
-            <span class="origin-rank">1순위<span class="required" style="font-size:10px">*</span></span>
-            <div class="fg" style="margin:0">
-              <input type="text" id="origin1-name" placeholder="원재료명 (예: 밀가루)" oninput="updatePreview()">
-            </div>
-            <div class="fg" style="margin:0">
-              <input type="text" id="origin1-country" placeholder="원산지 (예: 미국산)" oninput="updatePreview()">
-            </div>
-          </div>
-          <div class="origin-row">
-            <span class="origin-rank">2순위</span>
-            <div class="fg" style="margin:0">
-              <input type="text" id="origin2-name" placeholder="원재료명" oninput="updatePreview()">
-            </div>
-            <div class="fg" style="margin:0">
-              <input type="text" id="origin2-country" placeholder="원산지" oninput="updatePreview()">
-            </div>
-          </div>
-          <div class="origin-row">
-            <span class="origin-rank">3순위</span>
-            <div class="fg" style="margin:0">
-              <input type="text" id="origin3-name" placeholder="원재료명" oninput="updatePreview()">
-            </div>
-            <div class="fg" style="margin:0">
-              <input type="text" id="origin3-country" placeholder="원산지" oninput="updatePreview()">
-            </div>
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <label style="display:flex;align-items:center;gap:0">원산지 증빙 이미지 첨부 <span style="font-size:10px;color:var(--text3);margin-left:4px">(최대 3개 · JPG/PNG)</span>
-            <span class="tip-wrap" id="originImgTipWrap">
-              <span class="tip-icon">?</span>
-              <span class="tip-box" id="originImgTipBox">
-                <strong>원산지 증빙 이미지</strong><br>
-                납품서, 원산지 확인서 등<br>원산지를 증빙할 수 있는 서류를 사진으로 첨부하세요.<br>
-                <span class="tip-ex" id="originGuideImgsArea" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)">
-                  <div style="color:#aaa;font-size:11px;margin-bottom:6px">📎 가이드 이미지</div>
-                  <div id="originGuideImgList" style="display:flex;flex-direction:column;gap:6px"></div>
-                </span>
-              </span>
+```
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🌐 원산지 정보<span class="card-badge">필수</span><span class="card-badge" style="background:var(--accent2)">배합표 기준 3순위</span></div>
+      <span style="font-size:11px;color:var(--text3)">갤러리아점 기준</span>
+    </div>
+    <div style="font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:12px;font-weight:500">
+      ⚠️ 1~3순위 원재료명과 원산지를 모두 입력해야 합니다
+    </div>
+    <div class="origin-rows">
+      <div class="origin-row">
+        <span class="origin-rank">1순위<span class="required" style="font-size:10px">*</span></span>
+        <div class="fg" style="margin:0"><input type="text" id="origin1-name" placeholder="원재료명 (예: 밀가루)" oninput="updatePreview()"></div>
+        <div class="fg" style="margin:0"><input type="text" id="origin1-country" placeholder="원산지 (예: 미국산)" oninput="updatePreview()"></div>
+      </div>
+      <div class="origin-row">
+        <span class="origin-rank">2순위<span class="required" style="font-size:10px">*</span></span>
+        <div class="fg" style="margin:0"><input type="text" id="origin2-name" placeholder="원재료명" oninput="updatePreview()"></div>
+        <div class="fg" style="margin:0"><input type="text" id="origin2-country" placeholder="원산지" oninput="updatePreview()"></div>
+      </div>
+      <div class="origin-row">
+        <span class="origin-rank">3순위<span class="required" style="font-size:10px">*</span></span>
+        <div class="fg" style="margin:0"><input type="text" id="origin3-name" placeholder="원재료명" oninput="updatePreview()"></div>
+        <div class="fg" style="margin:0"><input type="text" id="origin3-country" placeholder="원산지" oninput="updatePreview()"></div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <label style="display:flex;align-items:center;gap:0">원산지 증빙 이미지 첨부 <span style="font-size:10px;color:var(--text3);margin-left:4px">(최대 3개 · JPG/PNG)</span>
+        <span class="tip-wrap" id="originImgTipWrap">
+          <span class="tip-icon">?</span>
+          <span class="tip-box" id="originImgTipBox">
+            <strong>원산지 증빙 이미지</strong><br>
+            납품서, 원산지 확인서 등<br>원산지를 증빙할 수 있는 서류를 사진으로 첨부하세요.<br>
+            <span class="tip-ex" id="originGuideImgsArea" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+              <div style="color:#aaa;font-size:11px;margin-bottom:6px">📎 가이드 이미지</div>
+              <div id="originGuideImgList" style="display:flex;flex-direction:column;gap:6px"></div>
             </span>
-          </label>
-          <div class="origin-images-wrap">
-            <div class="origin-img-slot" id="imgSlot0" onclick="triggerImgInput(0)">
-              <span style="font-size:18px;margin-bottom:2px">📷</span>
-              <span>이미지 1</span>
-              <input type="file" accept="image/*" id="imgInput0" onchange="handleOriginImg(0,this)" style="display:none" onclick="event.stopPropagation()">
-            </div>
-            <div class="origin-img-slot" id="imgSlot1" onclick="triggerImgInput(1)">
-              <span style="font-size:18px;margin-bottom:2px">📷</span>
-              <span>이미지 2</span>
-              <input type="file" accept="image/*" id="imgInput1" onchange="handleOriginImg(1,this)" style="display:none" onclick="event.stopPropagation()">
-            </div>
-            <div class="origin-img-slot" id="imgSlot2" onclick="triggerImgInput(2)">
-              <span style="font-size:18px;margin-bottom:2px">📷</span>
-              <span>이미지 3</span>
-              <input type="file" accept="image/*" id="imgInput2" onchange="handleOriginImg(2,this)" style="display:none" onclick="event.stopPropagation()">
-            </div>
-          </div>
+          </span>
+        </span>
+      </label>
+      <div class="origin-images-wrap">
+        <div class="origin-img-slot" id="imgSlot0" onclick="triggerImgInput(0)">
+          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 1</span>
+          <input type="file" accept="image/*" id="imgInput0" onchange="handleOriginImg(0,this)" style="display:none" onclick="event.stopPropagation()">
+        </div>
+        <div class="origin-img-slot" id="imgSlot1" onclick="triggerImgInput(1)">
+          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 2</span>
+          <input type="file" accept="image/*" id="imgInput1" onchange="handleOriginImg(1,this)" style="display:none" onclick="event.stopPropagation()">
+        </div>
+        <div class="origin-img-slot" id="imgSlot2" onclick="triggerImgInput(2)">
+          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 3</span>
+          <input type="file" accept="image/*" id="imgInput2" onchange="handleOriginImg(2,this)" style="display:none" onclick="event.stopPropagation()">
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- 알레르기 유발물질 -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">⚠️ 알레르기 유발물질<span class="card-badge">필수</span><span class="card-badge new-badge">중복 선택 가능</span></div>
-          <button class="btn btn-ghost btn-sm" onclick="clearAllergens()">전체 해제</button>
-        </div>
-        <div id="allergenRequiredMsg" style="display:none;font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:10px;font-weight:500">
-          ⚠️ 알레르기 유발물질을 선택하거나, 해당 없음을 확인해주세요
-        </div>
-        <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:7px 10px;margin-bottom:10px">
-          해당 알레르기가 없는 경우 아무것도 선택하지 않고 등록하세요 (자동으로 "없음"으로 처리됩니다)
-        </div>
-        <div class="allergen-grid" id="allergenGrid">
-          <!-- JS로 생성 -->
-        </div>
-        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <div style="font-size:12px;color:var(--text2)">
-            선택됨: <span id="allergenCount" style="color:var(--accent);font-weight:700;font-family:var(--mono)">0</span>개
-          </div>
-          <div class="custom-checkbox-wrap" id="allergenConfirmWrap" onclick="toggleAllergenConfirm()">
-            <input type="checkbox" id="allergenConfirm" style="display:none">
-            <div class="custom-checkbox-box">
-              <span class="custom-checkbox-checkmark">✓</span>
-            </div>
-            <span class="custom-checkbox-label">확인 완료 (알레르기 없음 포함)</span>
-          </div>
-        </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⚠️ 알레르기 유발물질<span class="card-badge">필수</span><span class="card-badge new-badge">중복 선택 가능</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="clearAllergens()">전체 해제</button>
+    </div>
+    <div id="allergenRequiredMsg" style="display:none;font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:10px;font-weight:500">
+      ⚠️ 알레르기 유발물질을 선택하거나, 해당 없음을 확인해주세요
+    </div>
+    <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:7px 10px;margin-bottom:10px">
+      해당 알레르기가 없는 경우 아무것도 선택하지 않고 등록하세요 (자동으로 "없음"으로 처리됩니다)
+    </div>
+    <div class="allergen-grid" id="allergenGrid"></div>
+    <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:12px;color:var(--text2)">
+        선택됨: <span id="allergenCount" style="color:var(--accent);font-weight:700;font-family:var(--mono)">0</span>개
       </div>
-
-      <!-- 배합표 -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🧪 배합표 입력<span class="card-badge" style="background:var(--accent3)">원가 자동 계산</span></div>
-          <button class="btn btn-secondary btn-sm" onclick="addIngRow()">+ 재료 추가</button>
-        </div>
-
-        <!-- 생산 기본 설정 -->
-        <div class="input-row" style="margin-bottom:14px">
-          <div class="fg" style="margin:0">
-            <label>생산량 (개)</label>
-            <input type="number" id="fQty" value="12" min="1" oninput="calcCosts()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label style="display:flex;align-items:center">
-              오버헤드 <span style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:3px">%</span>
-              <span class="tip-wrap">
-                <span class="tip-icon">?</span>
-                <span class="tip-box">
-                  <strong>오버헤드 (간접비율)</strong><br>
-                  재료비 외에 발생하는 <strong>간접 운영비</strong>를 재료비에 대한 비율로 입력합니다.<br><br>
-                  간접비에 포함되는 항목:<br>
-                  · 인건비 (급여, 4대보험)<br>
-                  · 임대료 · 관리비<br>
-                  · 전기·가스 등 공과금<br>
-                  · 포장재·소모품<br>
-                  · 설비 감가상각비<br><br>
-                  <span class="tip-ex">💡 일반적으로 베이커리는 <strong style="color:#f0c040">10~20%</strong>를 적용합니다.<br>예) 재료비 1,000원 · 오버헤드 15% → 간접비 150원 추가</span>
-                </span>
-              </span>
-            </label>
-            <input type="number" id="fOverhead" value="15" min="0" max="100" oninput="calcCosts()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label style="display:flex;align-items:center">
-              목표 마진 <span style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:3px">%</span>
-              <span class="tip-wrap">
-                <span class="tip-icon">?</span>
-                <span class="tip-box">
-                  <strong>목표 마진 (판매 이익률)</strong><br>
-                  판매가에서 원가가 차지하지 않는 비율, 즉 <strong>이익이 차지하는 비율</strong>입니다.<br><br>
-                  계산 공식:<br>
-                  <strong style="color:#f0c040">판매가 = 원가 ÷ (1 − 마진율)</strong><br><br>
-                  마진율별 판매가 예시 (원가 1,000원 기준):<br>
-                  · 20% → 판매가 <strong style="color:#f0c040">1,250원</strong><br>
-                  · 30% → 판매가 <strong style="color:#f0c040">1,429원</strong><br>
-                  · 40% → 판매가 <strong style="color:#f0c040">1,667원</strong><br>
-                  · 50% → 판매가 <strong style="color:#f0c040">2,000원</strong><br><br>
-                  <span class="tip-ex">💡 베이커리 권장 마진은 <strong style="color:#f0c040">30~45%</strong>입니다.<br>※ 마진율 ≠ 이익률(mark-up). 마진은 판매가 기준입니다.</span>
-                </span>
-              </span>
-            </label>
-            <input type="number" id="fMargin" value="30" min="0" max="95" oninput="calcCosts()">
-          </div>
-        </div>
-
-        <div class="ing-wrap">
-          <table class="ing-table">
-            <thead>
-              <tr>
-                <th style="min-width:120px">원재료명</th>
-                <th style="width:80px">사용량</th>
-                <th style="width:80px">단위</th>
-                <th style="width:90px;text-align:right">단가 (원/kg·L·개)</th>
-                <th style="width:90px;text-align:right">금액</th>
-                <th style="width:32px"></th>
-              </tr>
-            </thead>
-            <tbody id="ingBody"></tbody>
-          </table>
-        </div>
-        <div id="ingEmpty" style="text-align:center;padding:20px;color:var(--text3);font-size:12px">
-          ＋ 재료 추가 버튼을 눌러 배합표를 작성하세요
-        </div>
-        <div class="total-bar">
-          <span class="total-label">재료비 합계</span>
-          <div><span class="total-val" id="rawTotal">0</span> <span style="font-size:11px;color:var(--text2)">원</span></div>
-        </div>
+      <div class="custom-checkbox-wrap" id="allergenConfirmWrap" onclick="toggleAllergenConfirm()">
+        <input type="checkbox" id="allergenConfirm" style="display:none">
+        <div class="custom-checkbox-box"><span class="custom-checkbox-checkmark">✓</span></div>
+        <span class="custom-checkbox-label">확인 완료 (알레르기 없음 포함)</span>
       </div>
+    </div>
+  </div>
 
-    </div><!-- /form col -->
-
-    <!-- ════════ RIGHT: PANEL ════════ -->
-    <div>
-      <!-- 원가 요약 -->
-      <div class="cost-panel" style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:800;margin-bottom:14px;letter-spacing:-.2px">💰 원가 요약</div>
-        <div class="cost-row"><span class="crl">재료비</span><span class="crv" id="s-raw">0원</span></div>
-        <div class="cost-row"><span class="crl">오버헤드 (<span id="s-ohpct">15</span>%)</span><span class="crv" id="s-oh">0원</span></div>
-        <div class="cost-row"><span class="crl">총 원가</span><span class="crv" id="s-total">0원</span></div>
-        <div class="cost-row"><span class="crl">개당 원가</span><span class="crv" id="s-unit">0원</span></div>
-        <div class="cost-row total-row">
-          <span class="crl" style="font-weight:700;color:var(--text)">마진 적용 권장 판매가</span>
-          <span class="crv" id="s-sell">0원</span>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">개당 마진 <span id="s-mpct">30</span>% 적용</div>
-        <div class="sell-price-box" id="s-final">₩ 0</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🧪 배합표 입력<span class="card-badge" style="background:var(--accent3)">원가 자동 계산</span></div>
+      <button class="btn btn-secondary btn-sm" onclick="addIngRow()">+ 재료 추가</button>
+    </div>
+    <div class="input-row" style="margin-bottom:14px">
+      <div class="fg" style="margin:0">
+        <label>생산량 (개)</label>
+        <input type="number" id="fQty" value="12" min="1" oninput="calcCosts()">
       </div>
-
-      <!-- 제품 미리보기 -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-header" style="margin-bottom:10px"><div class="card-title" style="font-size:12px">👁 등록 미리보기</div></div>
-        <div id="preview" style="font-size:12px;line-height:1.8;color:var(--text2)">
-          <em style="color:var(--text3)">제품 정보 입력 후 자동 표시됩니다</em>
-        </div>
+      <div class="fg" style="margin:0">
+        <label style="display:flex;align-items:center">오버헤드 <span style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:3px">%</span>
+          <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box"><strong>오버헤드 (간접비율)</strong><br>재료비 외에 발생하는 <strong>간접 운영비</strong>를 재료비에 대한 비율로 입력합니다.<br><br>간접비에 포함되는 항목:<br>· 인건비 (급여, 4대보험)<br>· 임대료 · 관리비<br>· 전기·가스 등 공과금<br>· 포장재·소모품<br>· 설비 감가상각비<br><br><span class="tip-ex">💡 일반적으로 베이커리는 <strong style="color:#f0c040">10~20%</strong>를 적용합니다.</span></span></span>
+        </label>
+        <input type="number" id="fOverhead" value="15" min="0" max="100" oninput="calcCosts()">
       </div>
-
-      <!-- 알림 설정 -->
-      <!-- 카카오 알림 설정 제거됨 -->
-
-      <!-- 등록 버튼 -->
-      <button class="btn btn-primary btn-full" id="registerBtn" onclick="registerProduct()" disabled style="opacity:0.4;cursor:not-allowed">
-        ✅ 신제품 등록하기
-      </button>
-      <div id="registerBtnHint" style="margin-top:6px;text-align:center;font-size:11px;color:var(--danger);font-weight:500;min-height:16px"></div>
-      <div style="margin-top:4px;text-align:center;font-size:10px;color:var(--text3)">
-        Firebase에 저장 → index.html 알레르기 리스트 자동 업데이트
+      <div class="fg" style="margin:0">
+        <label style="display:flex;align-items:center">목표 마진 <span style="font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:3px">%</span>
+          <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box"><strong>목표 마진 (판매 이익률)</strong><br>판매가에서 원가가 차지하지 않는 비율입니다.<br><br>계산 공식:<br><strong style="color:#f0c040">판매가 = 원가 ÷ (1 − 마진율)</strong><br><br><span class="tip-ex">💡 베이커리 권장 마진은 <strong style="color:#f0c040">30~45%</strong>입니다.</span></span></span>
+        </label>
+        <input type="number" id="fMargin" value="30" min="0" max="95" oninput="calcCosts()">
       </div>
-    </div><!-- /panel col -->
+    </div>
+    <div class="ing-wrap">
+      <table class="ing-table">
+        <thead>
+          <tr>
+            <th style="min-width:120px">원재료명</th>
+            <th style="width:80px">사용량</th>
+            <th style="width:80px">단위</th>
+            <th style="width:90px;text-align:right">단가 (원/kg·L·개)</th>
+            <th style="width:90px;text-align:right">금액</th>
+            <th style="width:32px"></th>
+          </tr>
+        </thead>
+        <tbody id="ingBody"></tbody>
+      </table>
+    </div>
+    <div id="ingEmpty" style="text-align:center;padding:20px;color:var(--text3);font-size:12px">＋ 재료 추가 버튼을 눌러 배합표를 작성하세요</div>
+    <div class="total-bar">
+      <span class="total-label">재료비 합계</span>
+      <div><span class="total-val" id="rawTotal">0</span> <span style="font-size:11px;color:var(--text2)">원</span></div>
+    </div>
+  </div>
+</div>
 
-  </div><!-- /form-layout -->
-</div><!-- /page-register -->
+<div>
+  <div class="cost-panel" style="margin-bottom:14px">
+    <div style="font-size:12px;font-weight:800;margin-bottom:14px;letter-spacing:-.2px">💰 원가 요약</div>
+    <div class="cost-row"><span class="crl">재료비</span><span class="crv" id="s-raw">0원</span></div>
+    <div class="cost-row"><span class="crl">오버헤드 (<span id="s-ohpct">15</span>%)</span><span class="crv" id="s-oh">0원</span></div>
+    <div class="cost-row"><span class="crl">총 원가</span><span class="crv" id="s-total">0원</span></div>
+    <div class="cost-row"><span class="crl">개당 원가</span><span class="crv" id="s-unit">0원</span></div>
+    <div class="cost-row total-row">
+      <span class="crl" style="font-weight:700;color:var(--text)">마진 적용 권장 판매가</span>
+      <span class="crv" id="s-sell">0원</span>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">개당 마진 <span id="s-mpct">30</span>% 적용</div>
+    <div class="sell-price-box" id="s-final">₩ 0</div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header" style="margin-bottom:10px"><div class="card-title" style="font-size:12px">👁 등록 미리보기</div></div>
+    <div id="preview" style="font-size:12px;line-height:1.8;color:var(--text2)">
+      <em style="color:var(--text3)">제품 정보 입력 후 자동 표시됩니다</em>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-full" id="registerBtn" onclick="registerProduct()" disabled style="opacity:0.4;cursor:not-allowed">
+    ✅ 신제품 등록하기
+  </button>
+  <div id="registerBtnHint" style="margin-top:6px;text-align:center;font-size:11px;color:var(--danger);font-weight:500;min-height:16px"></div>
+  <div style="margin-top:4px;text-align:center;font-size:10px;color:var(--text3)">Firebase에 저장 → index.html 알레르기 리스트 자동 업데이트</div>
+</div>
+```
+
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════ -->
+
 <!-- PAGE: 등록 이력                                -->
+
 <!-- ═══════════════════════════════════════════════ -->
+
 <div id="page-history" class="page">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
     <span class="section-title" style="margin:0;white-space:nowrap">📋 신제품 등록 이력<span class="section-sub">Firebase 실시간 동기화</span></span>
@@ -548,7 +540,10 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <button class="btn btn-ghost btn-sm" onclick="loadHistory()">↻ 새로고침</button>
     </div>
   </div>
-  <div class="card" style="padding:0;overflow:hidden">
+
+  <!-- 데스크탑 테이블 -->
+
+  <div class="history-table-wrap card" style="padding:0;overflow:hidden">
     <table class="recent-table">
       <thead>
         <tr>
@@ -558,21 +553,27 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
           <th>원산지 (1순위)</th>
           <th>알레르기</th>
           <th>등록일시</th>
-          <th></th>
+          <th style="min-width:100px"></th>
         </tr>
       </thead>
       <tbody id="historyBody"></tbody>
     </table>
     <div id="historyEmpty" class="empty" style="display:none"><div class="ei">📋</div>등록된 신제품이 없습니다</div>
   </div>
+
+  <!-- 모바일 카드 리스트 -->
+
+  <div class="history-card-list" id="historyCardList"></div>
+  <div id="historyCardEmpty" class="empty" style="display:none"><div class="ei">📋</div>등록된 신제품이 없습니다</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
-<!-- PAGE: 설정                                     -->
-<!-- ═══════════════════════════════════════════════ -->
-<div id="page-settings" class="page">
 
-  <!-- 비밀번호 잠금 오버레이 -->
+<!-- PAGE: 설정                                     -->
+
+<!-- ═══════════════════════════════════════════════ -->
+
+<div id="page-settings" class="page">
   <div id="settingsLock" style="max-width:360px;margin:60px auto 0">
     <div class="card" style="text-align:center;padding:40px 32px">
       <div style="font-size:40px;margin-bottom:16px">🔐</div>
@@ -588,81 +589,74 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
     </div>
   </div>
 
-  <!-- 설정 본문 (잠금 해제 후 표시) -->
   <div id="settingsContent" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
       <div class="section-title" style="margin:0">⚙️ 설정<span class="section-sub">관리자 전용</span></div>
       <button class="btn btn-ghost btn-sm" onclick="lockSettings()">🔒 잠금</button>
     </div>
 
-    <!-- Firebase 설정 -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">🔥 Firebase 설정<span class="card-badge" style="background:var(--accent3)">직원 공유용</span></div>
-        <span id="fbStatusText" style="font-size:12px;color:var(--text3)">확인 중...</span>
-      </div>
-      <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:16px;line-height:1.7">
-        📌 <strong style="color:var(--text)">다른 직원과 공유하는 방법</strong><br>
-        아래 Firebase 설정값을 동일하게 입력하면 모든 기기에서 같은 DB에 연결됩니다.<br>
-        <span style="color:var(--accent3)">console.firebase.google.com</span> → 프로젝트 설정 → 앱에서 값을 확인하세요.
-      </div>
-      <div class="input-row">
-        <div class="fg"><label>Project ID</label><input type="text" id="fbProjectId" placeholder="예: hare-allergen"></div>
-        <div class="fg"><label>API Key</label><input type="text" id="fbApiKey" placeholder="AIzaSy..."></div>
-      </div>
-      <div class="fg"><label>Database URL</label><input type="text" id="fbDbUrl" placeholder="https://프로젝트명-default-rtdb.asia-southeast1.firebasedatabase.app"></div>
-      <div class="input-row">
-        <div class="fg"><label>Auth Domain</label><input type="text" id="fbAuthDomain" placeholder="프로젝트명.firebaseapp.com"></div>
-        <div class="fg"><label>App ID</label><input type="text" id="fbAppId" placeholder="1:000000:web:000000"></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-        <button class="btn btn-primary btn-sm" onclick="saveFirebaseSettings()">💾 저장 및 재연결</button>
-        <button class="btn btn-ghost btn-sm" onclick="loadDefaultFirebase()">↩ 기본값 복원</button>
-        <button class="btn btn-ghost btn-sm" onclick="copyShareText()">📋 공유 텍스트 복사</button>
-      </div>
-      <div id="fbShareBox" style="display:none;margin-top:14px;background:var(--surface2);border-radius:8px;padding:12px;font-size:11px;font-family:var(--mono);color:var(--text2);white-space:pre-wrap;word-break:break-all;border:1px solid var(--border)"></div>
-    </div>
+```
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">🔥 Firebase 설정<span class="card-badge" style="background:var(--accent3)">직원 공유용</span></div>
+    <span id="fbStatusText" style="font-size:12px;color:var(--text3)">확인 중...</span>
+  </div>
+  <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:16px;line-height:1.7">
+    📌 <strong style="color:var(--text)">다른 직원과 공유하는 방법</strong><br>
+    아래 Firebase 설정값을 동일하게 입력하면 모든 기기에서 같은 DB에 연결됩니다.<br>
+    <span style="color:var(--accent3)">console.firebase.google.com</span> → 프로젝트 설정 → 앱에서 값을 확인하세요.
+  </div>
+  <div class="input-row">
+    <div class="fg"><label>Project ID</label><input type="text" id="fbProjectId" placeholder="예: hare-allergen"></div>
+    <div class="fg"><label>API Key</label><input type="text" id="fbApiKey" placeholder="AIzaSy..."></div>
+  </div>
+  <div class="fg"><label>Database URL</label><input type="text" id="fbDbUrl" placeholder="https://프로젝트명-default-rtdb.asia-southeast1.firebasedatabase.app"></div>
+  <div class="input-row">
+    <div class="fg"><label>Auth Domain</label><input type="text" id="fbAuthDomain" placeholder="프로젝트명.firebaseapp.com"></div>
+    <div class="fg"><label>App ID</label><input type="text" id="fbAppId" placeholder="1:000000:web:000000"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+    <button class="btn btn-primary btn-sm" onclick="saveFirebaseSettings()">💾 저장 및 재연결</button>
+    <button class="btn btn-ghost btn-sm" onclick="loadDefaultFirebase()">↩ 기본값 복원</button>
+    <button class="btn btn-ghost btn-sm" onclick="copyShareText()">📋 공유 텍스트 복사</button>
+  </div>
+  <div id="fbShareBox" style="display:none;margin-top:14px;background:var(--surface2);border-radius:8px;padding:12px;font-size:11px;font-family:var(--mono);color:var(--text2);white-space:pre-wrap;word-break:break-all;border:1px solid var(--border)"></div>
+</div>
 
-    <!-- 카카오 설정 카드 제거됨 -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">🖼️ 원산지 증빙 가이드 이미지<span class="card-badge" style="background:var(--accent2)">신제품 등록 안내용</span></div>
+    <span style="font-size:11px;color:var(--text3)">최대 5개</span>
+  </div>
+  <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;line-height:1.7">
+    📌 <strong style="color:var(--text)">원산지 증빙 이미지 첨부 방법 안내</strong><br>
+    등록된 이미지는 <strong style="color:var(--accent)">신제품 등록 탭</strong>의 원산지 증빙 이미지 첨부 항목 옆 <strong style="color:var(--accent3)">?</strong> 아이콘 툴팁에 반영됩니다.
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="guideImgWrap"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-secondary btn-sm" onclick="addGuideImgSlot()">+ 가이드 이미지 추가</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearGuideImgs()">🗑 전체 삭제</button>
+  </div>
+  <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 이미지는 브라우저에 저장됩니다 (localStorage)</div>
+</div>
 
-    <!-- 원산지 증빙 가이드 이미지 -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">🖼️ 원산지 증빙 가이드 이미지<span class="card-badge" style="background:var(--accent2)">신제품 등록 안내용</span></div>
-        <span style="font-size:11px;color:var(--text3)">최대 5개</span>
-      </div>
-      <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;line-height:1.7">
-        📌 <strong style="color:var(--text)">원산지 증빙 이미지 첨부 방법 안내</strong><br>
-        신제품 등록 시 원산지 증빙 이미지 첨부 방법을 가이드하는 이미지를 여기에 등록하세요.<br>
-        등록된 이미지는 <strong style="color:var(--accent)">신제품 등록 탭</strong>의 원산지 증빙 이미지 첨부 항목 옆 <strong style="color:var(--accent3)">?</strong> 아이콘 툴팁에 반영됩니다.
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="guideImgWrap">
-        <!-- JS로 렌더 -->
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-secondary btn-sm" onclick="addGuideImgSlot()">+ 가이드 이미지 추가</button>
-        <button class="btn btn-ghost btn-sm" onclick="clearGuideImgs()">🗑 전체 삭제</button>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 이미지는 브라우저에 저장됩니다 (localStorage)</div>
-    </div>
+<div class="card">
+  <div class="card-header"><div class="card-title">🔑 설정 비밀번호 변경</div></div>
+  <div class="input-row">
+    <div class="fg"><label>새 비밀번호</label><input type="password" id="newPw1" placeholder="새 비밀번호"></div>
+    <div class="fg"><label>비밀번호 확인</label><input type="password" id="newPw2" placeholder="다시 입력"></div>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="changeSettingsPw()">🔑 변경</button>
+</div>
+```
 
-    <!-- 비밀번호 변경 -->
-    <div class="card">
-      <div class="card-header"><div class="card-title">🔑 설정 비밀번호 변경</div></div>
-      <div class="input-row">
-        <div class="fg"><label>새 비밀번호</label><input type="password" id="newPw1" placeholder="새 비밀번호"></div>
-        <div class="fg"><label>비밀번호 확인</label><input type="password" id="newPw2" placeholder="다시 입력"></div>
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick="changeSettingsPw()">🔑 변경</button>
-    </div>
   </div>
 </div>
 
-</main><!-- /main -->
+</main>
 
-<!-- ═══════════════════════════════════════════════ -->
-<!-- 등록 완료 모달                                  -->
-<!-- ═══════════════════════════════════════════════ -->
+<!-- 등록 완료 모달 -->
+
 <div class="modal-overlay" id="successModal">
   <div class="modal">
     <div class="modal-title">🎉 신제품 등록 완료!</div>
@@ -678,16 +672,114 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   </div>
 </div>
 
-<!-- ─────────────────────────────────────────────── -->
+<!-- ══ 제품 상세 모달 ══ -->
+
+<div class="modal-overlay" id="productDetailModal" onclick="if(event.target===this)closeProductDetail()">
+  <div class="modal" style="max-width:480px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px">
+      <div>
+        <div id="detailModalTitle" style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px;line-height:1.3;word-break:keep-all"></div>
+        <div id="detailModalMeta" style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="flex-shrink:0" onclick="closeProductDetail()">✕</button>
+    </div>
+    <div id="detailModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="detailDeleteBtn">🗑 삭제</button>
+      <button class="btn btn-secondary btn-sm" id="detailEditBtn" onclick="openEditModal()">✏️ 수정</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeProductDetail()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 수정 모달 ══ -->
+
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px">✏️ 제품 수정</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">✕</button>
+    </div>
+
+```
+<!-- 기본 정보 -->
+<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+  <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">기본 정보</div>
+  <div class="fg" style="margin-bottom:10px">
+    <label>제품이름 <span class="required">*</span></label>
+    <input type="text" id="editName" placeholder="제품이름">
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="fg" style="margin:0">
+      <label>카테고리</label>
+      <select id="editCat">
+        <option value="식빵/발효빵/식사빵">식빵/발효빵/식사빵</option>
+        <option value="일반빵">일반빵</option>
+        <option value="케이크/롤/파운드">케이크/롤/파운드</option>
+        <option value="쿠키/정과">쿠키/정과</option>
+        <option value="샌드위치/마카롱/초콜릿/잼/냉장">샌드위치/마카롱/초콜릿/잼/냉장</option>
+        <option value="시즌">시즌</option>
+      </select>
+    </div>
+    <div class="fg" style="margin:0">
+      <label>판매 금액</label>
+      <div class="price-wrap">
+        <span class="price-prefix">₩</span>
+        <input type="number" id="editPrice" placeholder="0" min="0" step="100">
+      </div>
+    </div>
+  </div>
+  <div class="fg" style="margin:0;margin-top:10px">
+    <label>비고</label>
+    <textarea id="editNote" rows="2" placeholder="특이사항, 보관방법 등..."></textarea>
+  </div>
+</div>
+
+<!-- 원산지 -->
+<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+  <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">원산지 <span style="font-size:10px;color:var(--danger);font-weight:600;text-transform:none">1~3순위 모두 필수</span></div>
+  <div class="edit-origin-row">
+    <span class="edit-origin-rank">1순위<span class="required" style="font-size:9px">*</span></span>
+    <input type="text" id="editO1n" placeholder="원재료명">
+    <input type="text" id="editO1c" placeholder="원산지">
+  </div>
+  <div class="edit-origin-row">
+    <span class="edit-origin-rank">2순위<span class="required" style="font-size:9px">*</span></span>
+    <input type="text" id="editO2n" placeholder="원재료명">
+    <input type="text" id="editO2c" placeholder="원산지">
+  </div>
+  <div class="edit-origin-row">
+    <span class="edit-origin-rank">3순위<span class="required" style="font-size:9px">*</span></span>
+    <input type="text" id="editO3n" placeholder="원재료명">
+    <input type="text" id="editO3c" placeholder="원산지">
+  </div>
+</div>
+
+<!-- 알레르기 -->
+<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">알레르기 유발물질</div>
+    <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="editClearAllergens()">전체 해제</button>
+  </div>
+  <div class="edit-allergen-grid" id="editAllergenGrid"></div>
+  <div style="margin-top:8px;font-size:11px;color:var(--text3)">선택 없음 = 알레르기 없음으로 저장됩니다</div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">취소</button>
+  <button class="btn btn-primary btn-sm" id="editSaveBtn" onclick="saveEdit()">💾 저장하기</button>
+</div>
+```
+
+  </div>
+</div>
+
 <script>
 (function waitForLibs() {
   if (typeof firebase === 'undefined') return setTimeout(waitForLibs, 30);
   INIT();
 })();
 
-/* ══════════════════════════════════════════════════ */
-/*  CONSTANTS                                         */
-/* ══════════════════════════════════════════════════ */
 const ALLERGENS = ['계란','우유','메밀','땅콩','대두','밀','고등어','게','새우','돼지고기','복숭아','토마토','아황산류','호두','닭고기','쇠고기','오징어','조개류','잣','꿀','한천','아몬드'];
 const CATS = ['식빵/발효빵/식사빵','일반빵','케이크/롤/파운드','쿠키/정과','샌드위치/마카롱/초콜릿/잼/냉장','시즌'];
 const CAT_COLORS = {'식빵/발효빵/식사빵':'#e8a87c','일반빵':'#85c1e9','케이크/롤/파운드':'#f1948a','쿠키/정과':'#82e0aa','샌드위치/마카롱/초콜릿/잼/냉장':'#c39bd3','시즌':'#f7dc6f'};
@@ -701,28 +793,20 @@ const FB_CFG = {
   appId:'1:988530050491:web:7fae0173b5c83f471b709e'
 };
 
-/* ══════════════════════════════════════════════════ */
-/*  STATE                                             */
-/* ══════════════════════════════════════════════════ */
 let db = null;
 let allergenState = {};
 ALLERGENS.forEach(a => allergenState[a] = false);
-let allergenConfirmed = false; // 알레르기 확인 완료 체크
+let allergenConfirmed = false;
 let originImages = [null, null, null];
 let ingRows = [];
 let rowId = 0;
 let lastRegistered = null;
-let emailOn = false; // (호환성 유지용 더미)
+let emailOn = false;
 
-/* ══════════════════════════════════════════════════ */
-/*  INIT                                             */
-/* ══════════════════════════════════════════════════ */
 function INIT() {
-  // Firebase 설정: localStorage 저장값 우선, 없으면 기본값
   const savedFb = getSavedFirebaseCfg();
   const fbCfg = savedFb || FB_CFG;
   try {
-    // 'register-app' 고정 이름 사용 → 다른 페이지 Firebase 인스턴스와 충돌 방지
     const existingApp = firebase.apps.find(a => a.name === 'register-app');
     const app = existingApp ? existingApp : firebase.initializeApp(fbCfg, 'register-app');
     db = firebase.database(app);
@@ -740,15 +824,11 @@ function INIT() {
     toast('Firebase 연결 오류: ' + e.message, 'error');
   }
   buildAllergenGrid();
-  // 커스텀 체크박스는 toggleAllergenConfirm() 으로 처리
   updateRegisterBtn();
   loadGuideImages();
   addIngRow();
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  ALLERGEN CONFIRM TOGGLE (커스텀 체크박스)           */
-/* ══════════════════════════════════════════════════ */
 function toggleAllergenConfirm() {
   const cb   = document.getElementById('allergenConfirm');
   const wrap = document.getElementById('allergenConfirmWrap');
@@ -759,9 +839,6 @@ function toggleAllergenConfirm() {
   updateRegisterBtn();
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  PAGE NAVIGATION                                   */
-/* ══════════════════════════════════════════════════ */
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
@@ -773,9 +850,6 @@ function showPage(id) {
   if (id === 'settings') { initSettingsPage(); setTimeout(renderGuideImgWrap, 50); }
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  ALLERGEN GRID                                     */
-/* ══════════════════════════════════════════════════ */
 function buildAllergenGrid() {
   const grid = document.getElementById('allergenGrid');
   grid.innerHTML = '';
@@ -807,12 +881,7 @@ function clearAllergens() {
   updatePreview();
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  ORIGIN IMAGES                                     */
-/* ══════════════════════════════════════════════════ */
-function triggerImgInput(idx) {
-  document.getElementById('imgInput' + idx).click();
-}
+function triggerImgInput(idx) { document.getElementById('imgInput' + idx).click(); }
 
 function handleOriginImg(idx, inp) {
   const file = inp.files[0];
@@ -864,9 +933,6 @@ function removeOriginImg(idx, e) {
   `;
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  INGREDIENT TABLE (배합표)                         */
-/* ══════════════════════════════════════════════════ */
 function addIngRow() {
   const id = ++rowId;
   ingRows.push({ id, name:'', qty:0, unit:'g', unitPrice:0 });
@@ -882,22 +948,13 @@ function removeIngRow(id) {
 function renderIngRows() {
   const body = document.getElementById('ingBody');
   const empty = document.getElementById('ingEmpty');
-  if (ingRows.length === 0) {
-    body.innerHTML = '';
-    empty.style.display = 'block';
-    calcCosts();
-    return;
-  }
+  if (ingRows.length === 0) { body.innerHTML = ''; empty.style.display = 'block'; calcCosts(); return; }
   empty.style.display = 'none';
   body.innerHTML = ingRows.map(r => `
     <tr id="row-${r.id}">
       <td><input type="text" value="${esc(r.name)}" placeholder="원재료명" oninput="updateRow(${r.id},'name',this.value)"></td>
       <td><input type="number" value="${r.qty||''}" placeholder="0" min="0" step="1" style="text-align:right" oninput="updateRow(${r.id},'qty',this.value)"></td>
-      <td>
-        <select onchange="updateRow(${r.id},'unit',this.value)">
-          ${['g','kg','ml','L','개','tbsp','tsp','꼬집'].map(u=>`<option${r.unit===u?' selected':''}>${u}</option>`).join('')}
-        </select>
-      </td>
+      <td><select onchange="updateRow(${r.id},'unit',this.value)">${['g','kg','ml','L','개','tbsp','tsp','꼬집'].map(u=>`<option${r.unit===u?' selected':''}>${u}</option>`).join('')}</select></td>
       <td><input type="number" value="${r.unitPrice||''}" placeholder="0" min="0" style="text-align:right" oninput="updateRow(${r.id},'unitPrice',this.value)"></td>
       <td class="cost-cell" id="cost-${r.id}">0원</td>
       <td><button class="del-btn" onclick="removeIngRow(${r.id})">✕</button></td>
@@ -915,9 +972,6 @@ function updateRow(id, field, val) {
 
 function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-/* ══════════════════════════════════════════════════ */
-/*  COST CALCULATION                                  */
-/* ══════════════════════════════════════════════════ */
 const UNIT_TO_KG = { g: 0.001, kg: 1, ml: 0.001, L: 1, 개: 1, tbsp: 0.015, tsp: 0.005, 꼬집: 0.001 };
 
 function calcCosts() {
@@ -929,15 +983,13 @@ function calcCosts() {
     const cell = document.getElementById('cost-' + r.id);
     if (cell) cell.textContent = fmt(cost) + '원';
   });
-
   const qty = Math.max(1, parseFloat(document.getElementById('fQty').value) || 1);
-  const oh = parseFloat(document.getElementById('fOverhead').value) || 0;
-  const mg = parseFloat(document.getElementById('fMargin').value) || 0;
+  const oh  = parseFloat(document.getElementById('fOverhead').value) || 0;
+  const mg  = parseFloat(document.getElementById('fMargin').value) || 0;
   const ohAmt = rawTotal * oh / 100;
   const totalCost = rawTotal + ohAmt;
   const perUnit = totalCost / qty;
   const sellPerUnit = mg < 100 ? perUnit / (1 - mg / 100) : 0;
-
   document.getElementById('rawTotal').textContent = fmt(rawTotal);
   document.getElementById('s-raw').textContent = fmt(rawTotal) + '원';
   document.getElementById('s-oh').textContent = fmt(ohAmt) + '원';
@@ -951,58 +1003,52 @@ function calcCosts() {
 
 function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
 
-/* ══════════════════════════════════════════════════ */
-/*  REGISTER BUTTON ENABLE/DISABLE                    */
-/* ══════════════════════════════════════════════════ */
 function updateRegisterBtn() {
   const name    = document.getElementById('fName').value.trim();
   const price   = parseFloat(document.getElementById('fPrice').value) || 0;
   const o1name  = document.getElementById('origin1-name').value.trim();
   const o1cntry = document.getElementById('origin1-country').value.trim();
+  const o2name  = document.getElementById('origin2-name').value.trim();
+  const o2cntry = document.getElementById('origin2-country').value.trim();
+  const o3name  = document.getElementById('origin3-name').value.trim();
+  const o3cntry = document.getElementById('origin3-country').value.trim();
   const allergenSelected = ALLERGENS.some(a => allergenState[a]);
   const allergenConfirmedChk = document.getElementById('allergenConfirm').checked;
-  const ready = name && price > 0 && o1name && o1cntry && (allergenSelected || allergenConfirmedChk);
-
+  const originOk = o1name && o1cntry && o2name && o2cntry && o3name && o3cntry;
+  const ready = name && price > 0 && originOk && (allergenSelected || allergenConfirmedChk);
   const btn = document.getElementById('registerBtn');
   btn.disabled = !ready;
   btn.style.opacity = ready ? '' : '0.4';
   btn.style.cursor  = ready ? '' : 'not-allowed';
-
-  // 미충족 항목 힌트 업데이트
   const hintEl = document.getElementById('registerBtnHint');
   if (!hintEl) return;
   if (ready) { hintEl.textContent = ''; return; }
   const missing = [];
-  if (!name)   missing.push('제품이름');
+  if (!name) missing.push('제품이름');
   if (price <= 0) missing.push('판매 금액');
   if (!o1name || !o1cntry) missing.push('원산지 1순위');
+  if (!o2name || !o2cntry) missing.push('원산지 2순위');
+  if (!o3name || !o3cntry) missing.push('원산지 3순위');
   if (!allergenSelected && !allergenConfirmedChk) missing.push('알레르기 확인');
   hintEl.textContent = '미입력: ' + missing.join(', ');
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  PREVIEW                                           */
-/* ══════════════════════════════════════════════════ */
 function updatePreview() {
   const name = document.getElementById('fName').value.trim();
-  const cat = document.getElementById('fCat').value;
+  const cat  = document.getElementById('fCat').value;
   const price = document.getElementById('fPrice').value;
   const o1n = document.getElementById('origin1-name').value.trim();
   const o1c = document.getElementById('origin1-country').value.trim();
   const selected = ALLERGENS.filter(a => allergenState[a]);
-
   updateRegisterBtn();
-
   if (!name) {
     document.getElementById('preview').innerHTML = '<em style="color:var(--text3)">제품이름을 입력하면 미리보기가 표시됩니다</em>';
     return;
   }
-
   const catColor = CAT_COLORS[cat] || '#bdc3c7';
   const allergenHtml = selected.length > 0
     ? selected.map(a => `<span class="a-mini">${a}</span>`).join('')
     : '<span style="color:var(--text3);font-size:11px">해당 없음</span>';
-
   document.getElementById('preview').innerHTML = `
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
       <strong style="color:var(--text);font-size:14px">${name}</strong>
@@ -1014,110 +1060,94 @@ function updatePreview() {
   `;
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  REGISTER PRODUCT                                  */
-/* ══════════════════════════════════════════════════ */
 async function registerProduct() {
   const name = document.getElementById('fName').value.trim();
   if (!name) { toast('제품이름을 입력해주세요', 'error'); document.getElementById('fName').focus(); document.getElementById('fName').classList.add('field-error'); return; }
   document.getElementById('fName').classList.remove('field-error');
-
   const cat = document.getElementById('fCat').value;
   const price = parseFloat(document.getElementById('fPrice').value) || 0;
   if (price <= 0) { toast('판매 금액을 입력해주세요', 'error'); document.getElementById('fPrice').focus(); document.getElementById('fPrice').classList.add('field-error'); return; }
   document.getElementById('fPrice').classList.remove('field-error');
-
-  // ── 원산지 필수 검증 ──
   const o1name = document.getElementById('origin1-name').value.trim();
   const o1country = document.getElementById('origin1-country').value.trim();
   if (!o1name || !o1country) {
     toast('원산지 1순위 원재료명과 원산지를 입력해주세요', 'error');
     if (!o1name) { document.getElementById('origin1-name').classList.add('field-error'); document.getElementById('origin1-name').focus(); }
     else { document.getElementById('origin1-country').classList.add('field-error'); document.getElementById('origin1-country').focus(); }
-    document.querySelector('.card:nth-of-type(2)').scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
   document.getElementById('origin1-name').classList.remove('field-error');
   document.getElementById('origin1-country').classList.remove('field-error');
-
-  // ── 알레르기 필수 확인 ──
+  const o2name = document.getElementById('origin2-name').value.trim();
+  const o2country = document.getElementById('origin2-country').value.trim();
+  if (!o2name || !o2country) {
+    toast('원산지 2순위 원재료명과 원산지를 입력해주세요', 'error');
+    if (!o2name) { document.getElementById('origin2-name').classList.add('field-error'); document.getElementById('origin2-name').focus(); }
+    else { document.getElementById('origin2-country').classList.add('field-error'); document.getElementById('origin2-country').focus(); }
+    return;
+  }
+  document.getElementById('origin2-name').classList.remove('field-error');
+  document.getElementById('origin2-country').classList.remove('field-error');
+  const o3name = document.getElementById('origin3-name').value.trim();
+  const o3country = document.getElementById('origin3-country').value.trim();
+  if (!o3name || !o3country) {
+    toast('원산지 3순위 원재료명과 원산지를 입력해주세요', 'error');
+    if (!o3name) { document.getElementById('origin3-name').classList.add('field-error'); document.getElementById('origin3-name').focus(); }
+    else { document.getElementById('origin3-country').classList.add('field-error'); document.getElementById('origin3-country').focus(); }
+    return;
+  }
+  document.getElementById('origin3-name').classList.remove('field-error');
+  document.getElementById('origin3-country').classList.remove('field-error');
   const selectedAllergens = ALLERGENS.filter(a => allergenState[a]);
   const confirmed = document.getElementById('allergenConfirm').checked;
   if (selectedAllergens.length === 0 && !confirmed) {
     document.getElementById('allergenRequiredMsg').style.display = 'block';
     toast('알레르기 유발물질을 선택하거나 "확인 완료"를 체크해주세요', 'error');
-    document.getElementById('allergenRequiredMsg').scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
   document.getElementById('allergenRequiredMsg').style.display = 'none';
 
   const btn = document.getElementById('registerBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ 등록 중...';
-
+  btn.disabled = true; btn.textContent = '⏳ 등록 중...';
   try {
     const id = 'new_' + Date.now();
     const now = new Date();
     const dateStr = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-
-    // 원산지 정보
     const origin = [
       { rank:1, name:document.getElementById('origin1-name').value.trim(), country:document.getElementById('origin1-country').value.trim() },
       { rank:2, name:document.getElementById('origin2-name').value.trim(), country:document.getElementById('origin2-country').value.trim() },
       { rank:3, name:document.getElementById('origin3-name').value.trim(), country:document.getElementById('origin3-country').value.trim() },
     ].filter(o => o.name || o.country);
-
-    // 배합표
     const recipe = ingRows.filter(r => r.name).map(r => ({
       name: r.name, qty: r.qty, unit: r.unit, unitPrice: r.unitPrice,
       cost: Math.round(r.qty * (UNIT_TO_KG[r.unit]||1) * r.unitPrice)
     }));
-
-    // index.html과 동일한 product 구조 생성
     const product = {
-      _id: id,
-      _newProduct: true,
-      제품이름: name,
-      카테고리: cat,
-      판매금액: price,
-      원산지: origin,
-      원산지이미지: originImages.filter(Boolean),
-      배합표: recipe,
-      비고: document.getElementById('fNote').value.trim(),
-      등록일시: dateStr,
-      등록상태: '신제품',
+      _id: id, _newProduct: true,
+      제품이름: name, 카테고리: cat, 판매금액: price,
+      원산지: origin, 원산지이미지: originImages.filter(Boolean),
+      배합표: recipe, 비고: document.getElementById('fNote').value.trim(),
+      등록일시: dateStr, 등록상태: '신제품',
     };
-
-    // 알레르기 필드 (index.html 포맷과 동일)
     ALLERGENS.forEach(a => { product[a] = allergenState[a] ? 'Yes' : 'No'; });
-
     if (!db) throw new Error('Firebase 미연결');
     await db.ref('products/' + id).set(product);
-
     lastRegistered = product;
-    toast('✅ ' + name + ' 등록 완료! index.html에 자동 반영됩니다.', 'success');
+    toast('✅ ' + name + ' 등록 완료!', 'success');
     showSuccessModal(product);
-
   } catch(e) {
     console.error(e);
     toast('등록 실패: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.style.opacity = '';
-    btn.style.cursor = '';
-    btn.innerHTML = '✅ index.html에 신제품 등록하기';
+    btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
+    btn.innerHTML = '✅ 신제품 등록하기';
     updateRegisterBtn();
   }
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  SUCCESS MODAL                                     */
-/* ══════════════════════════════════════════════════ */
 function showSuccessModal(p) {
   const selected = ALLERGENS.filter(a => p[a] === 'Yes');
-  const allergenStr = selected.length > 0 ? selected.join(', ') : '없음';
   const originStr = (p.원산지||[]).map(o=>`${o.rank}순위: ${o.name} (${o.country})`).join(' / ') || '미입력';
-
   document.getElementById('successContent').innerHTML = `
     <div style="margin-bottom:8px"><strong style="color:var(--text)">${p.제품이름}</strong> &nbsp;
       <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:${(CAT_COLORS[p.카테고리]||'#ccc')}33;color:${CAT_COLORS[p.카테고리]||'#ccc'}">${p.카테고리}</span>
@@ -1128,13 +1158,10 @@ function showSuccessModal(p) {
       ${selected.map(a=>`<span class="a-mini">${a}</span>`).join('') || '<span style="color:var(--text3);font-size:11px">알레르기 없음</span>'}
     </div>
   `;
-
   document.getElementById('successModal').classList.add('open');
 }
 
-function closeSuccess() {
-  document.getElementById('successModal').classList.remove('open');
-}
+function closeSuccess() { document.getElementById('successModal').classList.remove('open'); }
 
 function resetForm() {
   closeSuccess();
@@ -1152,23 +1179,18 @@ function resetForm() {
   document.getElementById('allergenConfirm').checked = false;
   document.getElementById('allergenConfirmWrap').classList.remove('checked');
   document.getElementById('allergenRequiredMsg').style.display = 'none';
-  // 입력 오류 상태 초기화
   document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
-  ingRows = [];
-  renderIngRows();
-  addIngRow();
-  calcCosts();
+  ingRows = []; renderIngRows(); addIngRow(); calcCosts();
   document.getElementById('fQty').value = 12;
   document.getElementById('fOverhead').value = 15;
   document.getElementById('fMargin').value = 30;
-  updatePreview();
-  updateRegisterBtn();
+  updatePreview(); updateRegisterBtn();
 }
 
 /* ══════════════════════════════════════════════════ */
 /*  HISTORY                                           */
 /* ══════════════════════════════════════════════════ */
-let historyCache = []; // 전체 데이터 캐시
+let historyCache = [];
 
 async function loadHistory() {
   if (!db) { toast('Firebase 미연결', 'error'); return; }
@@ -1177,15 +1199,11 @@ async function loadHistory() {
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">⏳ 불러오는 중...</td></tr>';
   empty.style.display = 'none';
   document.getElementById('historyCount').textContent = '';
-
   try {
     const snap = await db.ref('products').orderByChild('_newProduct').equalTo(true).get();
     const val = snap.val();
     if (!val) {
-      historyCache = [];
-      tbody.innerHTML = '';
-      empty.style.display = 'block';
-      return;
+      historyCache = []; tbody.innerHTML = ''; empty.style.display = 'block'; return;
     }
     historyCache = Object.values(val).sort((a,b) => {
       const ta = a._id ? a._id.replace('new_','') : '0';
@@ -1194,8 +1212,7 @@ async function loadHistory() {
     });
     filterHistory();
   } catch(e) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
+    tbody.innerHTML = ''; empty.style.display = 'block';
     toast('불러오기 실패: ' + e.message, 'error');
   }
 }
@@ -1213,52 +1230,79 @@ function filterHistory() {
       })
     : historyCache;
 
-  const tbody = document.getElementById('historyBody');
-  const empty = document.getElementById('historyEmpty');
+  const tbody   = document.getElementById('historyBody');
+  const empty   = document.getElementById('historyEmpty');
+  const cardList= document.getElementById('historyCardList');
+  const cardEmpty = document.getElementById('historyCardEmpty');
   const countEl = document.getElementById('historyCount');
 
   if (historyCache.length > 0) {
-    countEl.textContent = q
-      ? `${filtered.length} / ${historyCache.length}건`
-      : `총 ${historyCache.length}건`;
+    countEl.textContent = q ? `${filtered.length} / ${historyCache.length}건` : `총 ${historyCache.length}건`;
   } else {
     countEl.textContent = '';
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    empty.innerHTML = q
-      ? `<div class="ei">🔍</div>"${q}" 검색 결과가 없습니다`
-      : `<div class="ei">📋</div>등록된 신제품이 없습니다`;
+    tbody.innerHTML = ''; empty.style.display = 'block';
+    cardList.innerHTML = ''; cardEmpty.style.display = 'block';
+    const msg = q ? `<div class="ei">🔍</div>"${q}" 검색 결과가 없습니다` : `<div class="ei">📋</div>등록된 신제품이 없습니다`;
+    empty.innerHTML = msg; cardEmpty.innerHTML = msg;
     return;
   }
 
   empty.style.display = 'none';
+  cardEmpty.style.display = 'none';
+
+  // ── 데스크탑 테이블 ──
   tbody.innerHTML = filtered.map(p => {
     const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
     const origin1 = p.원산지 && p.원산지[0] ? `${p.원산지[0].name}/${p.원산지[0].country}` : '-';
     const catColor = CAT_COLORS[p.카테고리] || '#ccc';
     return `<tr>
       <td>
-        <strong>${highlight(p.제품이름||'', q)}</strong>
+        <span class="product-name-link" onclick="openProductDetail('${p._id}')">${highlight(p.제품이름||'', q)}</span>
         <span class="new-chip">신제품</span>
       </td>
-      <td>
-        <span class="cat-dot" style="background:${catColor}"></span>${highlight(p.카테고리||'-', q)}
-      </td>
+      <td><span class="cat-dot" style="background:${catColor}"></span>${highlight(p.카테고리||'-', q)}</td>
       <td style="font-family:var(--mono);color:var(--accent)">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</td>
       <td style="font-size:12px;color:var(--text2)">${origin1}</td>
-      <td>
-        <div class="allergen-mini">
-          ${allergens.length > 0 ? allergens.map(a=>`<span class="a-mini">${highlight(a,q)}</span>`).join('') : '<span style="font-size:11px;color:var(--text3)">없음</span>'}
-        </div>
-      </td>
+      <td><div class="allergen-mini">${allergens.length > 0 ? allergens.map(a=>`<span class="a-mini">${highlight(a,q)}</span>`).join('') : '<span style="font-size:11px;color:var(--text3)">없음</span>'}</div></td>
       <td style="font-size:11px;color:var(--text3);white-space:nowrap">${p.등록일시||'-'}</td>
       <td>
-        <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${esc(p.제품이름)}')">삭제</button>
+        <div style="display:flex;gap:5px;align-items:center">
+          <button class="btn btn-secondary btn-sm" style="padding:5px 9px" onclick="event.stopPropagation();openEditById('${p._id}')">✏️ 수정</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProduct('${p._id}','${esc(p.제품이름)}')">🗑 삭제</button>
+        </div>
       </td>
     </tr>`;
+  }).join('');
+
+  // ── 모바일 카드 ──
+  cardList.innerHTML = filtered.map(p => {
+    const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
+    const origin1 = p.원산지 && p.원산지[0] ? `${p.원산지[0].name} · ${p.원산지[0].country}` : '';
+    const catColor = CAT_COLORS[p.카테고리] || '#ccc';
+    const allergenHtml = allergens.length > 0
+      ? allergens.map(a=>`<span class="a-mini">${highlight(a,q)}</span>`).join('')
+      : '<span style="font-size:11px;color:var(--text3)">알레르기 없음</span>';
+    return `<div class="history-card" onclick="openProductDetail('${p._id}')">
+      <div class="hc-top">
+        <div class="hc-name">${highlight(p.제품이름||'', q)}<span class="new-chip" style="font-size:9px;margin-left:5px">신제품</span></div>
+        <div class="hc-price">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</div>
+      </div>
+      <div class="hc-meta">
+        <span class="hc-cat" style="background:${catColor}33;color:${catColor};border:1px solid ${catColor}55">${highlight(p.카테고리||'-', q)}</span>
+        ${origin1 ? `<span class="hc-origin">🌐 ${origin1}</span>` : ''}
+      </div>
+      <div class="hc-allergens">${allergenHtml}</div>
+      <div class="hc-footer">
+        <span class="hc-date">${p.등록일시||'-'}</span>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();openEditById('${p._id}')">✏️ 수정</button>
+          <button class="btn btn-danger btn-sm" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();deleteProduct('${p._id}','${esc(p.제품이름)}')">🗑 삭제</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -1288,23 +1332,101 @@ async function deleteProduct(id, name) {
   }
 }
 
+/* ══════════════════════════════════════════════════ */
+/*  PRODUCT DETAIL MODAL                              */
+/* ══════════════════════════════════════════════════ */
+let _detailCurrentId = null;
 
+function openProductDetail(id) {
+  if (!db) return;
+  _detailCurrentId = id;
+  db.ref('products/' + id).once('value', snap => {
+    const p = snap.val();
+    if (!p) { toast('데이터를 불러올 수 없습니다', 'error'); return; }
+
+    const catColor = CAT_COLORS[p.카테고리] || '#ccc';
+    const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
+
+    // 타이틀 + 메타
+    document.getElementById('detailModalTitle').textContent = p.제품이름 || '-';
+    document.getElementById('detailModalMeta').innerHTML = `
+      <span style="font-size:11px;padding:2px 9px;border-radius:20px;background:${catColor}33;color:${catColor};border:1px solid ${catColor}55;font-weight:600">${p.카테고리||''}</span>
+      <span class="new-chip">신제품</span>
+      <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : ''}</span>
+    `;
+
+    // 본문
+    const origins = (p.원산지||[]).map(o =>
+      `<div class="detail-origin-line"><strong style="color:var(--accent);font-family:var(--mono);font-size:11px">${o.rank}순위</strong> &nbsp;${o.name} <span style="color:var(--text3)">·</span> ${o.country}</div>`
+    ).join('') || '<span style="color:var(--text3)">—</span>';
+
+    const allergenHtml = allergens.length > 0
+      ? `<div class="detail-allergen-wrap">${allergens.map(a=>`<span class="a-mini">${a}</span>`).join('')}</div>`
+      : '<span style="font-size:12px;color:var(--text3)">해당 없음</span>';
+
+    const imgs = (p.원산지이미지 || []).filter(Boolean);
+    const imgHtml = imgs.length
+      ? `<div class="detail-imgs">${imgs.map(src=>`<img src="${src}" onclick="zoomImg('${src}')" alt="원산지 증빙">`).join('')}</div>`
+      : '';
+
+    const noteHtml = p.비고 ? `
+      <div class="detail-section">
+        <div class="detail-section-title">비고</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7">${p.비고}</div>
+      </div>` : '';
+
+    document.getElementById('detailModalBody').innerHTML = `
+      <div class="detail-section">
+        <div class="detail-section-title">원산지</div>
+        ${origins}
+        ${imgHtml}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">알레르기 유발물질</div>
+        ${allergenHtml}
+      </div>
+      ${noteHtml}
+      <div class="detail-section">
+        <div class="detail-row">
+          <span class="detail-key">등록일시</span>
+          <span class="detail-val" style="font-family:var(--mono);font-size:12px;color:var(--text3)">${p.등록일시||'—'}</span>
+        </div>
+      </div>
+    `;
+
+    // 삭제 버튼
+    document.getElementById('detailDeleteBtn').onclick = () => {
+      closeProductDetail();
+      deleteProduct(id, p.제품이름);
+    };
+
+    document.getElementById('productDetailModal').classList.add('open');
+  });
+}
+
+function closeProductDetail() {
+  document.getElementById('productDetailModal').classList.remove('open');
+  _detailCurrentId = null;
+}
+
+function zoomImg(src) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.innerHTML = `<img src="${src}" style="max-width:92vw;max-height:90vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)">`;
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
+}
 
 /* ══════════════════════════════════════════════════ */
-/*  SETTINGS PASSWORD                                 */
+/*  SETTINGS                                          */
 /* ══════════════════════════════════════════════════ */
 const SETTINGS_PW_KEY = 'reg_settings_pw';
 const DEFAULT_PW = 'hare';
-
-function getSettingsPw() {
-  return localStorage.getItem(SETTINGS_PW_KEY) || DEFAULT_PW;
-}
+function getSettingsPw() { return localStorage.getItem(SETTINGS_PW_KEY) || DEFAULT_PW; }
 
 function initSettingsPage() {
-  // 이미 해제 상태면 유지
   if (document.getElementById('settingsContent').style.display === 'block') {
-    loadFirebaseSettingsInputs();
-    return;
+    loadFirebaseSettingsInputs(); return;
   }
   document.getElementById('settingsLock').style.display = 'block';
   document.getElementById('settingsContent').style.display = 'none';
@@ -1345,9 +1467,6 @@ function changeSettingsPw() {
   toast('✅ 비밀번호가 변경되었습니다', 'success');
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  FIREBASE SETTINGS                                 */
-/* ══════════════════════════════════════════════════ */
 function getSavedFirebaseCfg() {
   try {
     const s = JSON.parse(localStorage.getItem('reg_firebase_cfg') || 'null');
@@ -1358,22 +1477,22 @@ function getSavedFirebaseCfg() {
 
 function loadFirebaseSettingsInputs() {
   const cfg = getSavedFirebaseCfg() || FB_CFG;
-  document.getElementById('fbProjectId').value = cfg.projectId || '';
-  document.getElementById('fbApiKey').value    = cfg.apiKey || '';
-  document.getElementById('fbDbUrl').value     = cfg.databaseURL || '';
-  document.getElementById('fbAuthDomain').value= cfg.authDomain || '';
-  document.getElementById('fbAppId').value     = cfg.appId || '';
+  document.getElementById('fbProjectId').value  = cfg.projectId || '';
+  document.getElementById('fbApiKey').value     = cfg.apiKey || '';
+  document.getElementById('fbDbUrl').value      = cfg.databaseURL || '';
+  document.getElementById('fbAuthDomain').value = cfg.authDomain || '';
+  document.getElementById('fbAppId').value      = cfg.appId || '';
   document.getElementById('fbShareBox').style.display = 'none';
 }
 
 function saveFirebaseSettings() {
   const cfg = {
-    apiKey:           document.getElementById('fbApiKey').value.trim(),
-    authDomain:       document.getElementById('fbAuthDomain').value.trim(),
-    databaseURL:      document.getElementById('fbDbUrl').value.trim(),
-    projectId:        document.getElementById('fbProjectId').value.trim(),
-    storageBucket:    (document.getElementById('fbProjectId').value.trim()) + '.firebasestorage.app',
-    appId:            document.getElementById('fbAppId').value.trim(),
+    apiKey:        document.getElementById('fbApiKey').value.trim(),
+    authDomain:    document.getElementById('fbAuthDomain').value.trim(),
+    databaseURL:   document.getElementById('fbDbUrl').value.trim(),
+    projectId:     document.getElementById('fbProjectId').value.trim(),
+    storageBucket: (document.getElementById('fbProjectId').value.trim()) + '.firebasestorage.app',
+    appId:         document.getElementById('fbAppId').value.trim(),
   };
   if (!cfg.apiKey || !cfg.databaseURL || !cfg.projectId) {
     toast('Project ID, API Key, Database URL는 필수입니다', 'error'); return;
@@ -1389,83 +1508,173 @@ function loadDefaultFirebase() {
   toast('기본값으로 복원됨', 'success');
 }
 
-function copyShareText() {
-  const cfg = getSavedFirebaseCfg() || FB_CFG;
-  const text =
-`[신제품 등록 시스템 · Firebase 설정]
-Project ID  : ${cfg.projectId}
-API Key     : ${cfg.apiKey}
-Database URL: ${cfg.databaseURL}
-Auth Domain : ${cfg.authDomain}
-App ID      : ${cfg.appId}
+/* ══════════════════════════════════════════════════ */
+/*  EDIT MODAL                                        */
+/* ══════════════════════════════════════════════════ */
+let editAllergenState = {};
+let _editCurrentId = null;
 
-▶ 설정 탭에서 위 값을 입력하고 [저장 및 재연결] 클릭`;
+/* 상세 모달의 "수정" 버튼에서 호출 */
+function openEditModal() {
+  const id = _detailCurrentId;
+  if (!id) return;
+  closeProductDetail();
+  openEditById(id);
+}
 
-  const box = document.getElementById('fbShareBox');
-  box.textContent = text;
-  box.style.display = 'block';
+/* 목록 행/카드에서 직접 호출 */
+function openEditById(id) {
+  if (!db) return;
+  _editCurrentId = id;
+  db.ref('products/' + id).once('value', snap => {
+    const p = snap.val();
+    if (!p) { toast('데이터를 불러올 수 없습니다', 'error'); return; }
 
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => toast('📋 공유 텍스트가 복사되었습니다', 'success'));
-  } else {
-    toast('위 텍스트를 복사하여 직원에게 전달하세요', 'info');
+    /* 기본 정보 */
+    document.getElementById('editName').value  = p.제품이름 || '';
+    document.getElementById('editCat').value   = p.카테고리 || '일반빵';
+    document.getElementById('editPrice').value = p.판매금액 || '';
+    document.getElementById('editNote').value  = p.비고 || '';
+
+    /* 원산지 */
+    const o = p.원산지 || [];
+    document.getElementById('editO1n').value = (o[0] && o[0].name)    || '';
+    document.getElementById('editO1c').value = (o[0] && o[0].country) || '';
+    document.getElementById('editO2n').value = (o[1] && o[1].name)    || '';
+    document.getElementById('editO2c').value = (o[1] && o[1].country) || '';
+    document.getElementById('editO3n').value = (o[2] && o[2].name)    || '';
+    document.getElementById('editO3c').value = (o[2] && o[2].country) || '';
+
+    /* 알레르기 */
+    editAllergenState = {};
+    ALLERGENS.forEach(a => { editAllergenState[a] = p[a] === 'Yes'; });
+    buildEditAllergenGrid();
+
+    document.getElementById('editModal').classList.add('open');
+  });
+}
+
+function buildEditAllergenGrid() {
+  const grid = document.getElementById('editAllergenGrid');
+  grid.innerHTML = '';
+  ALLERGENS.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'atag' + (editAllergenState[a] ? ' on' : '');
+    div.id = 'eatag-' + a;
+    div.innerHTML = `<span class="dot"></span>${a}`;
+    div.onclick = () => toggleEditAllergen(a);
+    grid.appendChild(div);
+  });
+}
+
+function toggleEditAllergen(a) {
+  editAllergenState[a] = !editAllergenState[a];
+  const el = document.getElementById('eatag-' + a);
+  if (el) {
+    el.classList.toggle('on', editAllergenState[a]);
+    el.querySelector('.dot').style.background = editAllergenState[a] ? 'var(--danger)' : 'var(--border)';
   }
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  CLIPBOARD SHARE (클립보드 복사 공유)               */
-/* ══════════════════════════════════════════════════ */
-let shareProduct = null;
-
-function setupShare(product) {
-  shareProduct = product;
+function editClearAllergens() {
+  ALLERGENS.forEach(a => { editAllergenState[a] = false; });
+  buildEditAllergenGrid();
 }
+
+async function saveEdit() {
+  const id = _editCurrentId;
+  if (!id || !db) return;
+
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { toast('제품이름을 입력해주세요', 'error'); document.getElementById('editName').focus(); return; }
+
+  const o1n = document.getElementById('editO1n').value.trim();
+  const o1c = document.getElementById('editO1c').value.trim();
+  const o2n = document.getElementById('editO2n').value.trim();
+  const o2c = document.getElementById('editO2c').value.trim();
+  const o3n = document.getElementById('editO3n').value.trim();
+  const o3c = document.getElementById('editO3c').value.trim();
+  if (!o1n || !o1c) { toast('원산지 1순위를 입력해주세요', 'error'); return; }
+  if (!o2n || !o2c) { toast('원산지 2순위를 입력해주세요', 'error'); return; }
+  if (!o3n || !o3c) { toast('원산지 3순위를 입력해주세요', 'error'); return; }
+
+  const btn = document.getElementById('editSaveBtn');
+  btn.disabled = true; btn.textContent = '⏳ 저장 중...';
+
+  try {
+    const origin = [
+      { rank:1, name:o1n, country:o1c },
+      { rank:2, name:o2n, country:o2c },
+      { rank:3, name:o3n, country:o3c },
+    ];
+
+    const updates = {
+      제품이름: name,
+      카테고리: document.getElementById('editCat').value,
+      판매금액: parseFloat(document.getElementById('editPrice').value) || 0,
+      비고: document.getElementById('editNote').value.trim(),
+      원산지: origin,
+    };
+    ALLERGENS.forEach(a => { updates[a] = editAllergenState[a] ? 'Yes' : 'No'; });
+
+    await db.ref('products/' + id).update(updates);
+    toast('✅ 수정 완료!', 'success');
+    closeEditModal();
+    loadHistory();
+  } catch(e) {
+    toast('저장 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 저장하기';
+  }
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  _editCurrentId = null;
+}
+
+
+let shareProduct = null;
+function setupShare(product) { shareProduct = product; }
 
 function copyShareText() {
   const p = shareProduct;
-  if (!p) return;
+  if (!p) {
+    // Firebase 설정 공유 텍스트 모드
+    const cfg = getSavedFirebaseCfg() || FB_CFG;
+    const text = `[신제품 등록 시스템 · Firebase 설정]\nProject ID  : ${cfg.projectId}\nAPI Key     : ${cfg.apiKey}\nDatabase URL: ${cfg.databaseURL}\nAuth Domain : ${cfg.authDomain}\nApp ID      : ${cfg.appId}\n\n▶ 설정 탭에서 위 값을 입력하고 [저장 및 재연결] 클릭`;
+    const box = document.getElementById('fbShareBox');
+    if (box) { box.textContent = text; box.style.display = 'block'; }
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('📋 공유 텍스트가 복사되었습니다', 'success'));
+    return;
+  }
   const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
   const allergenStr = allergens.length > 0 ? allergens.join(', ') : '없음';
   const originStr = (p.원산지||[]).map(o=>`${o.rank}순위 ${o.name}(${o.country})`).join(' / ') || '미입력';
-  const text =
-`🥐 신제품 등록 알림
-
-제품명: ${p.제품이름}
-카테고리: ${p.카테고리}
-판매가: ₩${Number(p.판매금액||0).toLocaleString('ko-KR')}
-
-원산지: ${originStr}
-알레르기: ${allergenStr}
-
-등록일시: ${p.등록일시}`;
-
+  const text = `🥐 신제품 등록 알림\n\n제품명: ${p.제품이름}\n카테고리: ${p.카테고리}\n판매가: ₩${Number(p.판매금액||0).toLocaleString('ko-KR')}\n\n원산지: ${originStr}\n알레르기: ${allergenStr}\n\n등록일시: ${p.등록일시}`;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => {
       toast('📋 복사됨! 카카오톡에 붙여넣기 하세요.', 'success');
       const btn = document.getElementById('copyShareBtn');
       if (btn) { btn.textContent = '✅ 복사됨!'; setTimeout(() => { btn.innerHTML = '📋 공유 내용 복사'; }, 2000); }
     }).catch(() => fallbackCopy(text));
-  } else {
-    fallbackCopy(text);
-  }
+  } else { fallbackCopy(text); }
 }
 
 function fallbackCopy(text) {
   const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
-  document.body.appendChild(ta);
-  ta.focus(); ta.select();
-  try { document.execCommand('copy'); toast('📋 복사됨! 카카오톡에 붙여넣기 하세요.', 'success'); }
+  ta.value = text; ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); toast('📋 복사됨!', 'success'); }
   catch(e) { toast('복사 실패 — 직접 선택 후 복사해주세요', 'error'); }
   document.body.removeChild(ta);
 }
 
 /* ══════════════════════════════════════════════════ */
-/*  GUIDE IMAGES (설정 탭 - 원산지 증빙 가이드)         */
+/*  GUIDE IMAGES                                      */
 /* ══════════════════════════════════════════════════ */
 const GUIDE_IMG_KEY = 'reg_origin_guide_imgs';
-let guideImages = []; // [{dataUrl, name}]
+let guideImages = [];
 
 function loadGuideImages() {
   try {
@@ -1502,8 +1711,7 @@ function renderOriginTipGuideImgs() {
   if (guideImages.length === 0) { area.style.display = 'none'; return; }
   area.style.display = 'block';
   list.innerHTML = guideImages.map((g, i) => `
-    <img src="${g.dataUrl}" alt="가이드 ${i+1}"
-      style="max-width:220px;border-radius:6px;border:1px solid rgba(255,255,255,.15)">
+    <img src="${g.dataUrl}" alt="가이드 ${i+1}" style="max-width:220px;border-radius:6px;border:1px solid rgba(255,255,255,.15)">
   `).join('');
 }
 
@@ -1512,53 +1720,37 @@ function addGuideImgSlot() {
   const inp = document.createElement('input');
   inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
   inp.onchange = function() {
-    const file = inp.files[0];
-    if (!file) return;
+    const file = inp.files[0]; if (!file) return;
     resizeImage(file, 800, dataUrl => {
       guideImages.push({ dataUrl, name: file.name });
-      saveGuideImages();
-      renderGuideImgWrap();
-      renderOriginTipGuideImgs();
+      saveGuideImages(); renderGuideImgWrap(); renderOriginTipGuideImgs();
       toast('가이드 이미지 추가됨', 'success');
     });
   };
-  document.body.appendChild(inp);
-  inp.click();
+  document.body.appendChild(inp); inp.click();
   setTimeout(() => inp.remove(), 3000);
 }
 
 function removeGuideImg(idx) {
   if (!confirm('이 가이드 이미지를 삭제할까요?')) return;
-  guideImages.splice(idx, 1);
-  saveGuideImages();
-  renderGuideImgWrap();
-  renderOriginTipGuideImgs();
+  guideImages.splice(idx, 1); saveGuideImages(); renderGuideImgWrap(); renderOriginTipGuideImgs();
   toast('삭제됨', 'success');
 }
 
 function clearGuideImgs() {
   if (!confirm('모든 가이드 이미지를 삭제할까요?')) return;
-  guideImages = [];
-  saveGuideImages();
-  renderGuideImgWrap();
-  renderOriginTipGuideImgs();
+  guideImages = []; saveGuideImages(); renderGuideImgWrap(); renderOriginTipGuideImgs();
   toast('전체 삭제됨', 'success');
 }
 
 function saveGuideImages() {
-  try { localStorage.setItem(GUIDE_IMG_KEY, JSON.stringify(guideImages)); } catch(e) {
-    toast('저장 실패 (용량 초과일 수 있습니다)', 'error');
-  }
+  try { localStorage.setItem(GUIDE_IMG_KEY, JSON.stringify(guideImages)); }
+  catch(e) { toast('저장 실패 (용량 초과일 수 있습니다)', 'error'); }
 }
 
 function viewGuideImg(idx) {
-  const g = guideImages[idx];
-  if (!g) return;
-  const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
-  ov.innerHTML = `<img src="${g.dataUrl}" style="max-width:90vw;max-height:90vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)">`;
-  ov.onclick = () => ov.remove();
-  document.body.appendChild(ov);
+  const g = guideImages[idx]; if (!g) return;
+  zoomImg(g.dataUrl);
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -1574,5 +1766,6 @@ function toast(msg, type = 'success') {
   setTimeout(() => t.remove(), 3200);
 }
 </script>
+
 </body>
 </html>
