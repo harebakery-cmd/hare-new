@@ -266,6 +266,44 @@ select option{background:var(--surface);color:var(--text)}
 .custom-checkbox-label{font-size:12px;color:var(--text2);font-weight:500;transition:color .15s}
 .custom-checkbox-wrap.checked .custom-checkbox-label{color:var(--success);font-weight:700}
 
+/* ── ADMIN REVIEW LOG ── */
+.admin-review-box{background:rgba(26,125,68,.06);border:1.5px solid rgba(26,125,68,.25);border-radius:var(--radius-sm);padding:12px 14px;margin-top:12px}
+.admin-review-title{font-size:11px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.admin-review-entry{font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid rgba(26,125,68,.12);line-height:1.5}
+.admin-review-entry:last-child{border-bottom:none}
+.admin-review-empty{font-size:12px;color:var(--text3);font-style:italic}
+.admin-confirm-bar{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+/* ── ADMIN MODE MODAL ── */
+.admin-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+.admin-modal-overlay.open{opacity:1;pointer-events:all}
+.admin-modal{background:var(--surface);border:2px solid var(--success);border-radius:14px;width:min(520px,96vw);max-height:88vh;overflow-y:auto;padding:24px;transform:translateY(12px);transition:transform .2s;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.admin-modal-overlay.open .admin-modal{transform:translateY(0)}
+.admin-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid rgba(26,125,68,.2)}
+.admin-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(26,125,68,.1);border:1.5px solid rgba(26,125,68,.3);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:var(--success)}
+/* admin inline edit */
+.admin-field-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.admin-origin-row{display:grid;grid-template-columns:40px 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.admin-origin-rank{font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+.admin-allergen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-top:8px}
+.admin-section{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px}
+/* diff highlight */
+.changed-field{border-color:var(--accent)!important;background:rgba(212,136,10,.06)!important}
+
+/* ── ADMIN MODE MODAL ── */
+.admin-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+.admin-modal-overlay.open{opacity:1;pointer-events:all}
+.admin-modal{background:var(--surface);border:2px solid var(--success);border-radius:14px;width:min(520px,96vw);max-height:88vh;overflow-y:auto;padding:24px;transform:translateY(12px);transition:transform .2s;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.admin-modal-overlay.open .admin-modal{transform:translateY(0)}
+.admin-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid rgba(26,125,68,.2)}
+.admin-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(26,125,68,.1);border:1.5px solid rgba(26,125,68,.3);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:var(--success)}
+.admin-field-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.admin-origin-row{display:grid;grid-template-columns:40px 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.admin-origin-rank{font-size:11px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+.admin-allergen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-top:8px}
+.admin-section{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px}
+.changed-field{border-color:var(--accent)!important;background:rgba(212,136,10,.06)!important}
+
 /* ── REQUIRED ERROR STATE ── */
 input.field-error,select.field-error{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(192,57,43,.12)!important}
 .field-error-msg{font-size:11px;color:var(--danger);margin-top:4px;font-weight:500;display:flex;align-items:center;gap:3px}
@@ -387,7 +425,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
         </div>
       </div>
 
-```
   <div class="card">
     <div class="card-header">
       <div class="card-title">🌐 원산지 정보<span class="card-badge">필수</span><span class="card-badge" style="background:var(--accent2)">배합표 기준 3순위</span></div>
@@ -454,6 +491,11 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
     </div>
     <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:6px;padding:7px 10px;margin-bottom:10px">
       해당 알레르기가 없는 경우 아무것도 선택하지 않고 등록하세요 (자동으로 "없음"으로 처리됩니다)
+    </div>
+    <!-- 알레르기 체크 가이드 이미지 영역 -->
+    <div id="allergenGuideImgsArea" style="display:none;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:7px;display:flex;align-items:center;gap:5px">🌾 알레르기 체크 가이드</div>
+      <div id="allergenGuideImgList" style="display:flex;gap:8px;flex-wrap:wrap"></div>
     </div>
     <div class="allergen-grid" id="allergenGrid"></div>
     <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -542,7 +584,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   <div id="registerBtnHint" style="margin-top:6px;text-align:center;font-size:11px;color:var(--danger);font-weight:500;min-height:16px"></div>
   <div style="margin-top:4px;text-align:center;font-size:10px;color:var(--text3)">Firebase에 저장 → index.html 알레르기 리스트 자동 업데이트</div>
 </div>
-```
 
   </div>
 </div>
@@ -623,7 +664,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <button class="btn btn-ghost btn-sm" onclick="lockSettings()">🔒 잠금</button>
     </div>
 
-```
 <div class="card">
   <div class="card-header">
     <div class="card-title">🔥 Firebase 설정<span class="card-badge" style="background:var(--accent3)">직원 공유용</span></div>
@@ -669,6 +709,24 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
 </div>
 
 <div class="card">
+  <div class="card-header">
+    <div class="card-title">🌾 알레르기 체크 가이드 이미지<span class="card-badge" style="background:var(--danger)">전 직원 공유</span></div>
+    <span style="font-size:11px;color:var(--text3)">최대 5개</span>
+  </div>
+  <div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;line-height:1.7">
+    📌 <strong style="color:var(--text)">알레르기 유발물질 체크 방법 안내 이미지</strong><br>
+    등록된 이미지는 <strong style="color:var(--accent)">신제품 등록 탭</strong>의 알레르기 유발물질 섹션 상단에 공유됩니다.<br>
+    체크 기준, 식품 알레르기 표기 가이드 등을 이미지로 업로드하세요.
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="allergenGuideImgWrap"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-secondary btn-sm" onclick="addAllergenGuideImg()">+ 가이드 이미지 추가</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearAllergenGuideImgs()">🗑 전체 삭제</button>
+  </div>
+  <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 이미지는 Firebase에 저장되어 모든 직원과 실시간 공유됩니다</div>
+</div>
+
+<div class="card">
   <div class="card-header"><div class="card-title">🔑 설정 비밀번호 변경</div></div>
   <div class="input-row">
     <div class="fg"><label>새 비밀번호</label><input type="password" id="newPw1" placeholder="새 비밀번호"></div>
@@ -676,7 +734,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   </div>
   <button class="btn btn-secondary btn-sm" onclick="changeSettingsPw()">🔑 변경</button>
 </div>
-```
 
   </div>
 </div>
@@ -712,9 +769,10 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <button class="btn btn-ghost btn-sm" style="flex-shrink:0" onclick="closeProductDetail()">✕</button>
     </div>
     <div id="detailModalBody"></div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-danger btn-sm" id="detailDeleteBtn">🗑 삭제</button>
       <button class="btn btn-secondary btn-sm" id="detailEditBtn" onclick="openEditModal()">✏️ 수정</button>
+      <button class="btn btn-success btn-sm" id="detailAdminConfirmBtn" onclick="openAdminModal()">🔐 관리자 모드</button>
       <button class="btn btn-secondary btn-sm" onclick="closeProductDetail()">닫기</button>
     </div>
   </div>
@@ -729,7 +787,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">✕</button>
     </div>
 
-```
 <!-- 기본 정보 -->
 <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
   <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">기본 정보</div>
@@ -797,8 +854,83 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   <button class="btn btn-ghost btn-sm" onclick="closeEditModal()">취소</button>
   <button class="btn btn-primary btn-sm" id="editSaveBtn" onclick="saveEdit()">💾 저장하기</button>
 </div>
-```
 
+  </div>
+</div>
+
+<!-- ══ 관리자 모드 모달 ══ -->
+<div class="admin-modal-overlay" id="adminModal" onclick="if(event.target===this)closeAdminModal()">
+  <div class="admin-modal">
+    <!-- 헤더 -->
+    <div class="admin-modal-header">
+      <div>
+        <div class="admin-badge">🔐 관리자 모드</div>
+        <div id="adminModalProductName" style="font-size:16px;font-weight:800;color:var(--text);margin-top:8px;letter-spacing:-.3px"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeAdminModal()">✕</button>
+    </div>
+
+    <!-- STEP 1: 비밀번호 입력 -->
+    <div id="adminStep1">
+      <div style="text-align:center;padding:10px 0 20px">
+        <div style="font-size:32px;margin-bottom:10px">🔑</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">관리자 비밀번호 확인</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:20px">설정 탭과 동일한 비밀번호를 입력하세요</div>
+        <input type="password" id="adminPwInput" placeholder="비밀번호 입력"
+          style="text-align:center;font-size:18px;letter-spacing:4px;max-width:240px;margin:0 auto;display:block"
+          onkeydown="if(event.key==='Enter')checkAdminPw()">
+        <div id="adminPwErr" style="display:none;font-size:12px;color:var(--danger);margin-top:8px;font-weight:600">⚠️ 비밀번호가 올바르지 않습니다</div>
+        <button class="btn btn-success btn-full" style="margin-top:16px;max-width:240px" onclick="checkAdminPw()">🔓 확인</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: 수정 폼 -->
+    <div id="adminStep2" style="display:none">
+      <div style="font-size:12px;color:var(--success);background:rgba(26,125,68,.08);border:1px solid rgba(26,125,68,.2);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-weight:600">
+        ✅ 관리자 인증 완료 — 원산지·알레르기 수정 후 저장하세요
+      </div>
+
+      <!-- 원산지 -->
+      <div class="admin-section">
+        <div class="admin-field-label">🌐 원산지 (1~3순위)</div>
+        <div class="admin-origin-row">
+          <span class="admin-origin-rank">1순위</span>
+          <input type="text" id="adminO1n" placeholder="원재료명">
+          <input type="text" id="adminO1c" placeholder="원산지">
+        </div>
+        <div class="admin-origin-row">
+          <span class="admin-origin-rank">2순위</span>
+          <input type="text" id="adminO2n" placeholder="원재료명">
+          <input type="text" id="adminO2c" placeholder="원산지">
+        </div>
+        <div class="admin-origin-row">
+          <span class="admin-origin-rank">3순위</span>
+          <input type="text" id="adminO3n" placeholder="원재료명">
+          <input type="text" id="adminO3c" placeholder="원산지">
+        </div>
+      </div>
+
+      <!-- 알레르기 -->
+      <div class="admin-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="admin-field-label" style="margin:0">⚠️ 알레르기 유발물질</div>
+          <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="adminClearAllergens()">전체 해제</button>
+        </div>
+        <div class="admin-allergen-grid" id="adminAllergenGrid"></div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">선택 없음 = 알레르기 없음</div>
+      </div>
+
+      <!-- 확인 메모 -->
+      <div class="admin-section">
+        <div class="admin-field-label">📝 수정 메모 (관리자 이력에 자동 기록)</div>
+        <input type="text" id="adminMemo" placeholder="예: 원산지 서류 재확인 후 수정, 알레르기 누락 추가 등">
+      </div>
+
+      <div class="modal-footer" style="gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="closeAdminModal()">취소</button>
+        <button class="btn btn-success" id="adminSaveBtn" onclick="saveAdminEdit()">💾 관리자 수정 저장</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -854,6 +986,7 @@ function INIT() {
   buildAllergenGrid();
   updateRegisterBtn();
   loadGuideImages();
+  loadAllergenGuideImages();
   addIngRow();
 
   /* ── 툴팁 클릭 토글 (모바일 지원) ── */
@@ -889,7 +1022,7 @@ function showPage(id) {
   const map = {register:0, history:1, settings:2};
   if (map[id] !== undefined) btns[map[id]].classList.add('active');
   if (id === 'history') loadHistory();
-  if (id === 'settings') { initSettingsPage(); setTimeout(renderGuideImgWrap, 50); }
+  if (id === 'settings') { initSettingsPage(); setTimeout(() => { renderGuideImgWrap(); renderAllergenGuideImgWrap(); }, 50); }
 }
 
 function buildAllergenGrid() {
@@ -1408,7 +1541,7 @@ function openProductDetail(id) {
 
     const imgs = (p.원산지이미지 || []).filter(Boolean);
     const imgHtml = imgs.length
-      ? `<div class="detail-imgs">${imgs.map(src=>`<img src="${src}" onclick="zoomImg('${src}')" alt="원산지 증빙">`).join('')}</div>`
+      ? `<div class="detail-imgs">${imgs.map((src,i)=>`<div style="position:relative;display:inline-block"><img src="${src}" onclick="zoomImg('${src}')" alt="원산지 증빙" style="display:block"><button onclick="downloadImg('${src}',${i})" title="원본 다운로드" style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;font-family:var(--font)">⬇ 저장</button></div>`).join('')}</div>`
       : '';
 
     const noteHtml = p.비고 ? `
@@ -1433,6 +1566,7 @@ function openProductDetail(id) {
           <span class="detail-key">등록일시</span>
           <span class="detail-val" style="font-family:var(--mono);font-size:12px;color:var(--text3)">${p.등록일시||'—'}</span>
         </div>
+        ${buildAdminReviewHtml(p)}
       </div>
     `;
 
@@ -1457,6 +1591,288 @@ function zoomImg(src) {
   ov.innerHTML = `<img src="${src}" style="max-width:92vw;max-height:90vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)">`;
   ov.onclick = () => ov.remove();
   document.body.appendChild(ov);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  ADMIN REVIEW LOG & ADMIN MODE                     */
+/* ══════════════════════════════════════════════════ */
+
+/* ── 이력 HTML 렌더 ── */
+function buildAdminReviewHtml(p) {
+  const logs = p.관리자확인로그;
+  if (!logs) return '<div class="admin-review-box" style="margin-top:10px"><div class="admin-review-title">🔎 관리자 확인 이력</div><div class="admin-review-empty">아직 관리자 확인 이력이 없습니다</div></div>';
+  const entries = (Array.isArray(logs) ? logs : Object.values(logs)).sort((a,b)=> (b.ts||0)-(a.ts||0));
+  let html = '<div class="admin-review-box" style="margin-top:10px"><div class="admin-review-title">🔎 관리자 확인 이력</div>';
+  entries.forEach(e => {
+    html += '<div class="admin-review-entry">';
+    html += '✅ <strong style="color:var(--success)">' + esc(e.adminName||'관리자') + '</strong>';
+    html += ' <span style="color:var(--text3);font-size:11px">' + (e.date||'') + '</span>';
+    if (e.changes && e.changes.length) {
+      html += '<div style="font-size:11px;color:var(--text2);margin-top:3px;padding-left:14px">';
+      e.changes.forEach(c => { html += '· ' + esc(c) + '<br>'; });
+      html += '</div>';
+    }
+    if (e.memo) html += '<div style="font-size:11px;color:var(--accent2);margin-top:2px;padding-left:14px">📝 ' + esc(e.memo) + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+/* ── 관리자 모달 상태 ── */
+let _adminProductSnapshot = null;
+let adminAllergenState = {};
+
+function nowStr() {
+  const n = new Date();
+  return n.getFullYear()+'.'+String(n.getMonth()+1).padStart(2,'0')+'.'+String(n.getDate()).padStart(2,'0')
+    +' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+
+/* ── 관리자 모달 열기 ── */
+function openAdminModal() {
+  const id = _detailCurrentId;
+  if (!id || !db) return;
+  // Step1 보이기 / Step2 숨기기 / 비밀번호 초기화
+  document.getElementById('adminStep1').style.display = 'block';
+  document.getElementById('adminStep2').style.display = 'none';
+  document.getElementById('adminPwInput').value = '';
+  document.getElementById('adminPwErr').style.display = 'none';
+  document.getElementById('adminModal').classList.add('open');
+  setTimeout(() => document.getElementById('adminPwInput').focus(), 200);
+
+  // 제품명 표시 (현재 상세 모달 제목 그대로)
+  const title = document.getElementById('detailModalTitle').textContent;
+  document.getElementById('adminModalProductName').textContent = title;
+}
+
+function closeAdminModal() {
+  document.getElementById('adminModal').classList.remove('open');
+  _adminProductSnapshot = null;
+}
+
+/* ── 비밀번호 확인 ── */
+function checkAdminPw() {
+  const val = document.getElementById('adminPwInput').value;
+  if (val !== getSettingsPw()) {
+    document.getElementById('adminPwErr').style.display = 'block';
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('adminPwInput').focus();
+    return;
+  }
+  document.getElementById('adminPwErr').style.display = 'none';
+  // 제품 데이터 불러와서 Step2 진입
+  db.ref('products/' + _detailCurrentId).once('value', snap => {
+    const p = snap.val();
+    if (!p) { toast('데이터 오류', 'error'); return; }
+    _adminProductSnapshot = p;
+
+    // 원산지 채우기
+    const o = p.원산지 || [];
+    document.getElementById('adminO1n').value = (o[0] && o[0].name) || '';
+    document.getElementById('adminO1c').value = (o[0] && o[0].country) || '';
+    document.getElementById('adminO2n').value = (o[1] && o[1].name) || '';
+    document.getElementById('adminO2c').value = (o[1] && o[1].country) || '';
+    document.getElementById('adminO3n').value = (o[2] && o[2].name) || '';
+    document.getElementById('adminO3c').value = (o[2] && o[2].country) || '';
+
+    // 알레르기 채우기
+    adminAllergenState = {};
+    ALLERGENS.forEach(a => { adminAllergenState[a] = p[a] === 'Yes'; });
+    buildAdminAllergenGrid();
+
+    document.getElementById('adminMemo').value = '';
+
+    // 변경 감지용 초기값 저장 후 입력 이벤트 연결
+    ['adminO1n','adminO1c','adminO2n','adminO2c','adminO3n','adminO3c'].forEach(id => {
+      const el = document.getElementById(id);
+      el.dataset.orig = el.value;
+      el.oninput = () => el.classList.toggle('changed-field', el.value !== el.dataset.orig);
+    });
+
+    document.getElementById('adminStep1').style.display = 'none';
+    document.getElementById('adminStep2').style.display = 'block';
+  });
+}
+
+/* ── 알레르기 그리드 ── */
+function buildAdminAllergenGrid() {
+  const grid = document.getElementById('adminAllergenGrid');
+  grid.innerHTML = '';
+  ALLERGENS.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'atag' + (adminAllergenState[a] ? ' on' : '');
+    div.id = 'aatag-' + a;
+    div.innerHTML = '<span class="dot"></span>' + a;
+    div.onclick = () => {
+      adminAllergenState[a] = !adminAllergenState[a];
+      div.classList.toggle('on', adminAllergenState[a]);
+      div.querySelector('.dot').style.background = adminAllergenState[a] ? 'var(--danger)' : 'var(--border)';
+    };
+    grid.appendChild(div);
+  });
+}
+
+function adminClearAllergens() {
+  ALLERGENS.forEach(a => { adminAllergenState[a] = false; });
+  buildAdminAllergenGrid();
+}
+
+/* ── 관리자 수정 저장 ── */
+async function saveAdminEdit() {
+  const id = _detailCurrentId;
+  if (!id || !db || !_adminProductSnapshot) return;
+
+  const p = _adminProductSnapshot;
+  const o = p.원산지 || [];
+  const changes = [];
+
+  // 원산지 변경 감지
+  const newOrigin = [
+    { rank:1, name: document.getElementById('adminO1n').value.trim(), country: document.getElementById('adminO1c').value.trim() },
+    { rank:2, name: document.getElementById('adminO2n').value.trim(), country: document.getElementById('adminO2c').value.trim() },
+    { rank:3, name: document.getElementById('adminO3n').value.trim(), country: document.getElementById('adminO3c').value.trim() },
+  ];
+  [0,1,2].forEach(i => {
+    const oldN = (o[i] && o[i].name) || '';
+    const oldC = (o[i] && o[i].country) || '';
+    const newN = newOrigin[i].name;
+    const newC = newOrigin[i].country;
+    if (oldN !== newN || oldC !== newC) {
+      changes.push('원산지 '+(i+1)+'순위: '+(oldN||'(없음)')+'·'+(oldC||'(없음)')+' → '+(newN||'(없음)')+'·'+(newC||'(없음)'));
+    }
+  });
+
+  // 알레르기 변경 감지
+  const addedAllergens = ALLERGENS.filter(a => adminAllergenState[a] && p[a] !== 'Yes');
+  const removedAllergens = ALLERGENS.filter(a => !adminAllergenState[a] && p[a] === 'Yes');
+  if (addedAllergens.length) changes.push('알레르기 추가: ' + addedAllergens.join(', '));
+  if (removedAllergens.length) changes.push('알레르기 제거: ' + removedAllergens.join(', '));
+
+  if (!newOrigin[0].name || !newOrigin[0].country) { toast('원산지 1순위는 필수입니다', 'error'); return; }
+  if (!newOrigin[1].name || !newOrigin[1].country) { toast('원산지 2순위는 필수입니다', 'error'); return; }
+  if (!newOrigin[2].name || !newOrigin[2].country) { toast('원산지 3순위는 필수입니다', 'error'); return; }
+
+  const btn = document.getElementById('adminSaveBtn');
+  btn.disabled = true; btn.textContent = '⏳ 저장 중...';
+
+  try {
+    const updates = { 원산지: newOrigin };
+    ALLERGENS.forEach(a => { updates[a] = adminAllergenState[a] ? 'Yes' : 'No'; });
+
+    // 관리자 확인 로그 항목 생성
+    const logEntry = {
+      adminName: '관리자',
+      date: nowStr(),
+      ts: Date.now(),
+      changes: changes.length ? changes : ['변경 없음 (확인만)'],
+      memo: document.getElementById('adminMemo').value.trim(),
+    };
+
+    await db.ref('products/' + id).update(updates);
+    await db.ref('products/' + id + '/관리자확인로그').push(logEntry);
+
+    toast('✅ 관리자 수정 저장 완료', 'success');
+    closeAdminModal();
+    openProductDetail(id);  // 상세 모달 새로고침
+  } catch(e) {
+    toast('저장 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 관리자 수정 저장';
+  }
+}
+
+/* 사진 원본 다운로드 */
+function downloadImg(src, idx) {
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = '원산지이미지_' + (_detailCurrentId || 'img') + '_' + (idx + 1) + '.jpg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('📥 이미지 다운로드 시작', 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  ALLERGEN GUIDE IMAGES (Firebase 실시간 공유)     */
+/* ══════════════════════════════════════════════════ */
+let allergenGuideImages = [];
+
+function loadAllergenGuideImages() {
+  if (!db) return;
+  db.ref('allergenGuideImages').on('value', snap => {
+    const val = snap.val();
+    allergenGuideImages = val
+      ? Object.values(val).sort((a, b) => (a.order || 0) - (b.order || 0))
+      : [];
+    renderAllergenGuideImgWrap();
+    renderAllergenGuideInForm();
+  });
+}
+
+function renderAllergenGuideImgWrap() {
+  const wrap = document.getElementById('allergenGuideImgWrap');
+  if (!wrap) return;
+  if (allergenGuideImages.length === 0) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:16px 0">등록된 알레르기 가이드 이미지가 없습니다</div>';
+    return;
+  }
+  wrap.innerHTML = allergenGuideImages.map((g, i) => `
+    <div style="position:relative;width:110px;flex-shrink:0">
+      <img src="${g.dataUrl}" alt="알레르기 가이드 ${i+1}"
+        style="width:110px;height:110px;object-fit:cover;border-radius:var(--radius-sm);border:1.5px solid var(--border);cursor:pointer"
+        onclick="zoomImg('${g.dataUrl}')">
+      <button onclick="removeAllergenGuideImg('${g._id}')"
+        style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name || '이미지 '+(i+1)}</div>
+    </div>
+  `).join('');
+}
+
+function renderAllergenGuideInForm() {
+  const area = document.getElementById('allergenGuideImgsArea');
+  const list = document.getElementById('allergenGuideImgList');
+  if (!area || !list) return;
+  if (allergenGuideImages.length === 0) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  list.innerHTML = allergenGuideImages.map((g, i) => `
+    <img src="${g.dataUrl}" alt="가이드 ${i+1}" onclick="zoomImg('${g.dataUrl}')"
+      style="max-width:200px;max-height:160px;border-radius:6px;border:1.5px solid var(--border);cursor:zoom-in;object-fit:contain">
+  `).join('');
+}
+
+function addAllergenGuideImg() {
+  if (allergenGuideImages.length >= 5) { toast('알레르기 가이드 이미지는 최대 5개까지 등록 가능합니다', 'error'); return; }
+  if (!db) { toast('Firebase 미연결', 'error'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.onchange = function() {
+    const file = inp.files[0]; if (!file) return;
+    resizeImage(file, 1000, dataUrl => {
+      const id = 'allerguide_' + Date.now();
+      db.ref('allergenGuideImages/' + id).set({ _id: id, dataUrl, name: file.name, order: Date.now() })
+        .then(() => toast('✅ 알레르기 가이드 이미지 추가됨 — 전 직원 공유됩니다', 'success'))
+        .catch(e => toast('저장 실패: ' + e.message, 'error'));
+    });
+  };
+  document.body.appendChild(inp); inp.click();
+  setTimeout(() => inp.remove(), 3000);
+}
+
+function removeAllergenGuideImg(id) {
+  if (!confirm('이 알레르기 가이드 이미지를 삭제할까요?\n전 직원에게 반영됩니다.')) return;
+  if (!db) return;
+  db.ref('allergenGuideImages/' + id).remove()
+    .then(() => toast('삭제됨', 'success'))
+    .catch(e => toast('삭제 실패: ' + e.message, 'error'));
+}
+
+function clearAllergenGuideImgs() {
+  if (!confirm('모든 알레르기 가이드 이미지를 삭제할까요?\n전 직원에게 반영됩니다.')) return;
+  if (!db) return;
+  db.ref('allergenGuideImages').remove()
+    .then(() => toast('전체 삭제됨', 'success'))
+    .catch(e => toast('삭제 실패: ' + e.message, 'error'));
 }
 
 /* ══════════════════════════════════════════════════ */
