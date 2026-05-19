@@ -266,6 +266,29 @@ select option{background:var(--surface);color:var(--text)}
 .custom-checkbox-label{font-size:12px;color:var(--text2);font-weight:500;transition:color .15s}
 .custom-checkbox-wrap.checked .custom-checkbox-label{color:var(--success);font-weight:700}
 
+/* ── HISTORY TABS ── */
+.history-tab{
+  background:none;border:none;cursor:pointer;padding:10px 18px;font-family:var(--font);
+  font-size:13px;font-weight:600;color:var(--text3);border-bottom:3px solid transparent;
+  margin-bottom:-2px;transition:color .15s,border-color .15s;
+}
+.history-tab:hover{color:var(--text)}
+.history-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+#tab-done.active{color:var(--success);border-bottom-color:var(--success)}
+
+.history-row-done td{opacity:.55}
+.history-row-done .product-name-link{text-decoration:line-through;color:var(--text3)}
+.done-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(26,125,68,.12);color:var(--success);font-weight:700;border:1px solid rgba(26,125,68,.25);margin-left:5px}
+
+.complete-chk-wrap{display:flex;align-items:center;justify-content:center}
+.complete-chk{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);background:var(--surface);cursor:pointer;appearance:none;-webkit-appearance:none;position:relative;transition:all .15s;flex-shrink:0}
+.complete-chk:checked{background:var(--success);border-color:var(--success)}
+.complete-chk:checked::after{content:"\2713";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;font-weight:900;line-height:1}
+.complete-chk:disabled{opacity:.3;cursor:not-allowed}
+
+.history-card-done{opacity:.6}
+.history-card-done .hc-name{text-decoration:line-through;color:var(--text3)}
+
 /* ── ADMIN REVIEW LOG ── */
 .admin-review-box{background:rgba(26,125,68,.06);border:1.5px solid rgba(26,125,68,.25);border-radius:var(--radius-sm);padding:12px 14px;margin-top:12px}
 .admin-review-title{font-size:11px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
@@ -595,7 +618,8 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
 <!-- ═══════════════════════════════════════════════ -->
 
 <div id="page-history" class="page">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+  <!-- 헤더 영역 -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
     <span class="section-title" style="margin:0;white-space:nowrap">📋 신제품 등록 이력<span class="section-sub">Firebase 실시간 동기화</span></span>
     <div style="flex:1;min-width:180px;position:relative">
       <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none">🔍</span>
@@ -607,11 +631,46 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <span id="historyCount" style="font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap"></span>
       <button class="btn btn-ghost btn-sm" onclick="clearHistorySearch()">✕ 초기화</button>
       <button class="btn btn-ghost btn-sm" onclick="loadHistory()">↻ 새로고침</button>
+      <button class="btn btn-sm" id="historyAdminBtn" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text2)" onclick="toggleHistoryAdminMode()">🔐 관리자 모드</button>
     </div>
   </div>
 
-  <!-- 데스크탑 테이블 -->
+  <!-- 관리자 모드 인증 패널 -->
+  <div id="historyAdminPanel" style="display:none;margin-bottom:14px">
+    <div style="background:rgba(26,125,68,.06);border:1.5px solid rgba(26,125,68,.3);border-radius:var(--radius);padding:14px 18px">
+      <div id="historyAdminLockArea">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">🔑 관리자 비밀번호 확인</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="password" id="historyAdminPwInput" placeholder="비밀번호 입력"
+            style="font-size:15px;letter-spacing:3px;max-width:200px;padding:8px 12px"
+            onkeydown="if(event.key==='Enter')checkHistoryAdminPw()">
+          <button class="btn btn-success btn-sm" onclick="checkHistoryAdminPw()">🔓 확인</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeHistoryAdminMode()">취소</button>
+        </div>
+        <div id="historyAdminPwErr" style="display:none;font-size:12px;color:var(--danger);margin-top:6px;font-weight:600">⚠️ 비밀번호가 올바르지 않습니다</div>
+      </div>
+      <div id="historyAdminActiveArea" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--success)">
+            ✅ 관리자 모드 활성화 — 목록 우측 체크박스로 완료 처리하세요
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="closeHistoryAdminMode()">🔒 잠금</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- 신청중 / 완료 탭 -->
+  <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid var(--border)">
+    <button class="history-tab active" id="tab-pending" onclick="switchHistoryTab('pending')">
+      ⏳ 신청중 <span id="tab-pending-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(212,136,10,.15);color:var(--accent);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
+    </button>
+    <button class="history-tab" id="tab-done" onclick="switchHistoryTab('done')">
+      ✅ 완료 <span id="tab-done-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(26,125,68,.15);color:var(--success);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
+    </button>
+  </div>
+
+  <!-- 데스크탑 테이블 -->
   <div class="history-table-wrap card" style="padding:0;overflow:hidden">
     <table class="recent-table">
       <thead>
@@ -622,7 +681,8 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
           <th>원산지 (1순위)</th>
           <th>알레르기</th>
           <th>등록일시</th>
-          <th style="min-width:100px"></th>
+          <th style="min-width:110px"></th>
+          <th id="th-complete" style="width:56px;text-align:center;display:none">완료</th>
         </tr>
       </thead>
       <tbody id="historyBody"></tbody>
@@ -631,7 +691,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   </div>
 
   <!-- 모바일 카드 리스트 -->
-
   <div class="history-card-list" id="historyCardList"></div>
   <div id="historyCardEmpty" class="empty" style="display:none"><div class="ei">📋</div>등록된 신제품이 없습니다</div>
 </div>
@@ -772,7 +831,6 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
     <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-danger btn-sm" id="detailDeleteBtn">🗑 삭제</button>
       <button class="btn btn-secondary btn-sm" id="detailEditBtn" onclick="openEditModal()">✏️ 수정</button>
-      <button class="btn btn-success btn-sm" id="detailAdminConfirmBtn" onclick="openAdminModal()">🔐 관리자 모드</button>
       <button class="btn btn-secondary btn-sm" onclick="closeProductDetail()">닫기</button>
     </div>
   </div>
@@ -1366,19 +1424,101 @@ function resetForm() {
 /*  HISTORY                                           */
 /* ══════════════════════════════════════════════════ */
 let historyCache = [];
+let historyTab = 'pending'; // 'pending' | 'done'
+let historyAdminUnlocked = false;
+
+/* ── 탭 전환 ── */
+function switchHistoryTab(tab) {
+  historyTab = tab;
+  document.querySelectorAll('.history-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  filterHistory();
+}
+
+/* ── 관리자 모드 토글 ── */
+function toggleHistoryAdminMode() {
+  const panel = document.getElementById('historyAdminPanel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    if (!historyAdminUnlocked) {
+      setTimeout(() => document.getElementById('historyAdminPwInput').focus(), 100);
+    }
+  } else {
+    closeHistoryAdminMode();
+  }
+}
+
+function checkHistoryAdminPw() {
+  const val = document.getElementById('historyAdminPwInput').value;
+  if (val !== getSettingsPw()) {
+    document.getElementById('historyAdminPwErr').style.display = 'block';
+    document.getElementById('historyAdminPwInput').value = '';
+    document.getElementById('historyAdminPwInput').focus();
+    return;
+  }
+  document.getElementById('historyAdminPwErr').style.display = 'none';
+  historyAdminUnlocked = true;
+  document.getElementById('historyAdminLockArea').style.display = 'none';
+  document.getElementById('historyAdminActiveArea').style.display = 'block';
+  const btn = document.getElementById('historyAdminBtn');
+  btn.style.background = 'rgba(26,125,68,.12)';
+  btn.style.borderColor = 'rgba(26,125,68,.4)';
+  btn.style.color = 'var(--success)';
+  btn.textContent = '✅ 관리자 모드 ON';
+  // 완료 체크박스 열 표시
+  document.getElementById('th-complete').style.display = '';
+  filterHistory();
+}
+
+function closeHistoryAdminMode() {
+  historyAdminUnlocked = false;
+  document.getElementById('historyAdminPanel').style.display = 'none';
+  document.getElementById('historyAdminLockArea').style.display = 'block';
+  document.getElementById('historyAdminActiveArea').style.display = 'none';
+  document.getElementById('historyAdminPwInput').value = '';
+  document.getElementById('historyAdminPwErr').style.display = 'none';
+  const btn = document.getElementById('historyAdminBtn');
+  btn.style.background = 'var(--surface2)';
+  btn.style.borderColor = 'var(--border)';
+  btn.style.color = 'var(--text2)';
+  btn.textContent = '🔐 관리자 모드';
+  document.getElementById('th-complete').style.display = 'none';
+  filterHistory();
+}
+
+/* ── 완료 처리 ── */
+async function toggleProductDone(id, currentDone) {
+  if (!historyAdminUnlocked) { toast('관리자 모드에서만 변경 가능합니다', 'error'); return; }
+  if (!db) return;
+  const newDone = !currentDone;
+  try {
+    await db.ref('products/' + id + '/완료처리').set(newDone ? true : null);
+    if (newDone) {
+      await db.ref('products/' + id + '/완료일시').set(nowStr());
+    } else {
+      await db.ref('products/' + id + '/완료일시').remove();
+    }
+    toast(newDone ? '✅ 완료 처리되었습니다' : '↩ 신청중으로 되돌렸습니다', 'success');
+    loadHistory();
+  } catch(e) {
+    toast('처리 실패: ' + e.message, 'error');
+  }
+}
 
 async function loadHistory() {
   if (!db) { toast('Firebase 미연결', 'error'); return; }
   const tbody = document.getElementById('historyBody');
   const empty = document.getElementById('historyEmpty');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">⏳ 불러오는 중...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">⏳ 불러오는 중...</td></tr>';
   empty.style.display = 'none';
   document.getElementById('historyCount').textContent = '';
   try {
     const snap = await db.ref('products').orderByChild('_newProduct').equalTo(true).get();
     const val = snap.val();
     if (!val) {
-      historyCache = []; tbody.innerHTML = ''; empty.style.display = 'block'; return;
+      historyCache = []; tbody.innerHTML = ''; empty.style.display = 'block';
+      updateTabCounts([], []);
+      return;
     }
     historyCache = Object.values(val).sort((a,b) => {
       const ta = a._id ? a._id.replace('new_','') : '0';
@@ -1392,9 +1532,16 @@ async function loadHistory() {
   }
 }
 
+function updateTabCounts(pending, done) {
+  const pc = document.getElementById('tab-pending-count');
+  const dc = document.getElementById('tab-done-count');
+  if (pc) pc.textContent = pending.length || '';
+  if (dc) dc.textContent = done.length || '';
+}
+
 function filterHistory() {
   const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
-  const filtered = q
+  const searched = q
     ? historyCache.filter(p => {
         const allergens = ALLERGENS.filter(a => p[a] === 'Yes').join(' ');
         const origin = (p.원산지||[]).map(o=>o.name+' '+o.country).join(' ');
@@ -1405,50 +1552,66 @@ function filterHistory() {
       })
     : historyCache;
 
+  const pending = searched.filter(p => !p.완료처리);
+  const done    = searched.filter(p =>  p.완료처리);
+  updateTabCounts(pending, done);
+  const filtered = historyTab === 'done' ? done : pending;
+
   const tbody   = document.getElementById('historyBody');
   const empty   = document.getElementById('historyEmpty');
   const cardList= document.getElementById('historyCardList');
   const cardEmpty = document.getElementById('historyCardEmpty');
   const countEl = document.getElementById('historyCount');
 
-  if (historyCache.length > 0) {
-    countEl.textContent = q ? `${filtered.length} / ${historyCache.length}건` : `총 ${historyCache.length}건`;
-  } else {
-    countEl.textContent = '';
-  }
+  const total = historyTab === 'done' ? done.length : pending.length;
+  countEl.textContent = q ? `${filtered.length} / ${total}건` : `총 ${total}건`;
 
   if (filtered.length === 0) {
     tbody.innerHTML = ''; empty.style.display = 'block';
     cardList.innerHTML = ''; cardEmpty.style.display = 'block';
-    const msg = q ? `<div class="ei">🔍</div>"${q}" 검색 결과가 없습니다` : `<div class="ei">📋</div>등록된 신제품이 없습니다`;
+    const msg = q
+      ? `<div class="ei">🔍</div>"${q}" 검색 결과가 없습니다`
+      : historyTab === 'done'
+        ? `<div class="ei">✅</div>완료된 품목이 없습니다`
+        : `<div class="ei">📋</div>신청중인 품목이 없습니다`;
     empty.innerHTML = msg; cardEmpty.innerHTML = msg;
     return;
   }
 
   empty.style.display = 'none';
   cardEmpty.style.display = 'none';
+  const isDone = historyTab === 'done';
+  const showChk = historyAdminUnlocked;
 
   // ── 데스크탑 테이블 ──
   tbody.innerHTML = filtered.map(p => {
     const allergens = ALLERGENS.filter(a => p[a] === 'Yes');
     const origin1 = p.원산지 && p.원산지[0] ? `${p.원산지[0].name}/${p.원산지[0].country}` : '-';
     const catColor = CAT_COLORS[p.카테고리] || '#ccc';
-    return `<tr>
+    const chkCell = showChk
+      ? `<td class="complete-chk-wrap">
+          <input type="checkbox" class="complete-chk" ${p.완료처리 ? 'checked' : ''}
+            onclick="event.stopPropagation();toggleProductDone('${p._id}',${!!p.완료처리})">
+        </td>`
+      : '';
+    const rowClass = p.완료처리 ? 'history-row-done' : '';
+    return `<tr class="${rowClass}">
       <td>
         <span class="product-name-link" onclick="openProductDetail('${p._id}')">${highlight(p.제품이름||'', q)}</span>
-        <span class="new-chip">신제품</span>
+        ${p.완료처리 ? '<span class="done-badge">완료</span>' : '<span class="new-chip">신제품</span>'}
       </td>
       <td><span class="cat-dot" style="background:${catColor}"></span>${highlight(p.카테고리||'-', q)}</td>
       <td style="font-family:var(--mono);color:var(--accent)">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</td>
       <td style="font-size:12px;color:var(--text2)">${origin1}</td>
       <td><div class="allergen-mini">${allergens.length > 0 ? allergens.map(a=>`<span class="a-mini">${highlight(a,q)}</span>`).join('') : '<span style="font-size:11px;color:var(--text3)">없음</span>'}</div></td>
-      <td style="font-size:11px;color:var(--text3);white-space:nowrap">${p.등록일시||'-'}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap">${p.완료처리 && p.완료일시 ? '✅ '+p.완료일시 : p.등록일시||'-'}</td>
       <td>
         <div style="display:flex;gap:5px;align-items:center">
           <button class="btn btn-secondary btn-sm" style="padding:5px 9px" onclick="event.stopPropagation();openEditById('${p._id}')">✏️ 수정</button>
           <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProduct('${p._id}','${esc(p.제품이름)}')">🗑 삭제</button>
         </div>
       </td>
+      ${chkCell}
     </tr>`;
   }).join('');
 
@@ -1460,10 +1623,21 @@ function filterHistory() {
     const allergenHtml = allergens.length > 0
       ? allergens.map(a=>`<span class="a-mini">${highlight(a,q)}</span>`).join('')
       : '<span style="font-size:11px;color:var(--text3)">알레르기 없음</span>';
-    return `<div class="history-card" onclick="openProductDetail('${p._id}')">
+    const cardDoneClass = p.완료처리 ? ' history-card-done' : '';
+    const chkBtn = showChk
+      ? `<input type="checkbox" class="complete-chk" style="margin-left:4px" ${p.완료처리 ? 'checked' : ''}
+           onclick="event.stopPropagation();toggleProductDone('${p._id}',${!!p.완료처리})">`
+      : '';
+    return `<div class="history-card${cardDoneClass}" onclick="openProductDetail('${p._id}')">
       <div class="hc-top">
-        <div class="hc-name">${highlight(p.제품이름||'', q)}<span class="new-chip" style="font-size:9px;margin-left:5px">신제품</span></div>
-        <div class="hc-price">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</div>
+        <div class="hc-name">
+          ${highlight(p.제품이름||'', q)}
+          ${p.완료처리 ? '<span class="done-badge" style="font-size:9px;margin-left:5px">완료</span>' : '<span class="new-chip" style="font-size:9px;margin-left:5px">신제품</span>'}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="hc-price">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</div>
+          ${chkBtn}
+        </div>
       </div>
       <div class="hc-meta">
         <span class="hc-cat" style="background:${catColor}33;color:${catColor};border:1px solid ${catColor}55">${highlight(p.카테고리||'-', q)}</span>
@@ -1471,7 +1645,7 @@ function filterHistory() {
       </div>
       <div class="hc-allergens">${allergenHtml}</div>
       <div class="hc-footer">
-        <span class="hc-date">${p.등록일시||'-'}</span>
+        <span class="hc-date">${p.완료처리 && p.완료일시 ? '✅ '+p.완료일시 : p.등록일시||'-'}</span>
         <div style="display:flex;gap:5px">
           <button class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();openEditById('${p._id}')">✏️ 수정</button>
           <button class="btn btn-danger btn-sm" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();deleteProduct('${p._id}','${esc(p.제품이름)}')">🗑 삭제</button>
