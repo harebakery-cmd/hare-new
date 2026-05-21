@@ -20,7 +20,7 @@
   --shadow:0 4px 24px rgba(0,0,0,.10);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
 /* ── HEADER ── */
 header{
@@ -40,9 +40,10 @@ header{
 .hbtn.active{background:var(--accent);color:#fff;font-weight:700}
 
 /* ── LAYOUT ── */
-main{padding:24px;max-width:1180px;margin:0 auto;width:100%}
+main{padding:24px;max-width:1180px;margin:0 auto;width:100%;min-width:0}
 .page{display:none}.page.active{display:block}
-.form-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.form-layout{display:grid;grid-template-columns:1fr minmax(0,320px);gap:20px;align-items:start;min-width:0}
+.form-layout>*{min-width:0}
 @media(max-width:900px){.form-layout{grid-template-columns:1fr}}
 
 /* ── CARD ── */
@@ -119,12 +120,12 @@ select option{background:var(--surface);color:var(--text)}
 .origin-img-slot .img-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
 
 /* ── INGREDIENT TABLE ── */
-.ing-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ing-table{width:100%;border-collapse:collapse;min-width:480px}
-.ing-table th{text-align:left;padding:8px 8px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:700}
-.ing-table td{padding:5px 6px;vertical-align:middle;border-bottom:1px solid var(--surface2)}
+.ing-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border-radius:var(--radius-sm)}
+.ing-table{width:100%;border-collapse:collapse;table-layout:auto}
+.ing-table th{text-align:left;padding:8px 6px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);font-weight:700}
+.ing-table td{padding:5px 4px;vertical-align:middle;border-bottom:1px solid var(--surface2)}
 .ing-table tr:hover td{background:var(--surface2)}
-.ing-table input,.ing-table select{padding:6px 8px;font-size:13px;border-color:var(--border)}
+.ing-table input,.ing-table select{padding:6px 6px;font-size:13px;border-color:var(--border);min-width:0;width:100%}
 .cost-cell{font-family:var(--mono);font-size:12px;color:var(--accent);text-align:right;white-space:nowrap}
 .total-bar{display:flex;justify-content:flex-end;gap:20px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 .total-label{font-size:12px;color:var(--text2)}
@@ -354,41 +355,53 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   .ing-th-full{display:none}
   .ing-th-short{display:inline!important}
   .hide-mobile{display:none!important}
-}
-  html, body { overflow-x: hidden; }
 
-  header{padding:0 12px;gap:8px}
+  header{padding:0 10px;gap:6px}
   .logo-sub{display:none}
-  .logo{font-size:14px}
-  .hbtn{padding:5px 8px;font-size:11px}
-  main{padding:12px}
+  .logo{font-size:13px}
+  .hbtn{padding:4px 7px;font-size:11px}
+  main{padding:10px}
 
-  .card{padding:14px;margin-bottom:10px}
+  .card{padding:12px;margin-bottom:10px}
+  .card-header{flex-wrap:wrap;gap:5px;padding-bottom:8px;margin-bottom:10px}
+  .card-title{font-size:12px;flex:1;min-width:0}
+  .card-badge{font-size:9px;padding:1px 5px}
 
-  /* card-header: 뱃지 많아도 줄바꿈 허용 */
-  .card-header{flex-wrap:wrap;gap:6px;padding-bottom:10px;margin-bottom:12px}
-  .card-title{font-size:13px}
-  .card-badge{font-size:9px;padding:1px 6px}
+  .form-layout{gap:10px}
+  .origin-img-slot{width:64px;height:64px}
 
-  .form-layout{gap:12px}
-  .origin-img-slot{width:68px;height:68px}
+  /* 배합표 테이블 — 모바일: fixed layout + 열 너비 압축 */
+  .ing-wrap{
+    margin:0 -12px;
+    width:calc(100% + 24px);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .ing-table{
+    width:100%;
+    table-layout:fixed;
+    min-width:0;
+  }
+  .ing-table th:nth-child(1),.ing-table td:nth-child(1){width:auto}
+  .ing-table th:nth-child(2),.ing-table td:nth-child(2){width:50px}
+  .ing-table th:nth-child(3),.ing-table td:nth-child(3){width:44px}
+  .ing-table th:nth-child(4),.ing-table td:nth-child(4){width:62px}
+  .ing-table th:nth-child(5),.ing-table td:nth-child(5){width:54px}
+  .ing-table th:nth-child(6),.ing-table td:nth-child(6){width:26px}
+  .ing-table th{padding:5px 2px;font-size:10px;letter-spacing:0}
+  .ing-table td{padding:3px 2px}
+  .ing-table input,.ing-table select{padding:4px 3px;font-size:11px;min-width:0;width:100%}
+  .cost-cell{font-size:11px}
 
-  /* 배합표 테이블: 칸 축소 */
-  .ing-wrap{margin:0 -2px}
-  .ing-table{min-width:320px}
-  .ing-table th{padding:6px 4px;font-size:10px;letter-spacing:0}
-  .ing-table td{padding:4px 3px}
-  .ing-table input,.ing-table select{padding:5px 4px;font-size:12px;min-width:0}
-
-  /* 원가 요약: 긴 라벨 줄바꿈 */
+  /* 원가 요약 */
   .cost-row{flex-wrap:wrap;gap:2px}
   .cost-row.total-row{flex-direction:column;align-items:flex-start;gap:4px;padding-top:10px}
-  .cost-row.total-row .crv{font-size:16px}
-  .sell-price-box{font-size:18px;padding:10px}
+  .cost-row.total-row .crv{font-size:15px}
+  .sell-price-box{font-size:17px;padding:10px}
 
-  .btn-full{padding:13px;font-size:14px}
-  .ing-table th,.ing-table td{padding:5px 4px}
-  .total-val{font-size:15px}
+  .btn-full{padding:12px;font-size:14px}
+  .total-val{font-size:14px}
+  .total-bar{gap:12px}
 }
 </style>
 
@@ -560,12 +573,12 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <table class="ing-table">
         <thead>
           <tr>
-            <th style="min-width:100px">원재료명</th>
-            <th style="width:64px">사용량</th>
-            <th style="width:64px">단위</th>
-            <th style="width:76px;text-align:right"><span class="ing-th-full">단가 (원/kg·L·개)</span><span class="ing-th-short" style="display:none">단가</span></th>
-            <th style="width:76px;text-align:right">금액</th>
-            <th style="width:28px"></th>
+            <th>원재료명</th>
+            <th>사용량</th>
+            <th>단위</th>
+            <th style="text-align:right"><span class="ing-th-full">단가 (원/kg·L·개)</span><span class="ing-th-short" style="display:none">단가</span></th>
+            <th style="text-align:right">금액</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="ingBody"></tbody>
@@ -671,7 +684,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   </div>
 
   <!-- 데스크탑 테이블 -->
-  <div class="history-table-wrap card" style="padding:0;overflow:hidden">
+  <div class="history-table-wrap card" style="padding:0;overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table class="recent-table">
       <thead>
         <tr>
