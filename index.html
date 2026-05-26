@@ -1132,11 +1132,15 @@ function triggerImgInput(idx) { document.getElementById('imgInput' + idx).click(
 function handleOriginImg(idx, inp) {
   const file = inp.files[0];
   if (!file) return;
-  resizeImage(file, 600, dataUrl => {
+  // 원본 이미지 그대로 저장 (압축/리사이즈 없음)
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
     originImages[idx] = dataUrl;
     renderImgSlot(idx, dataUrl);
     toast('이미지 ' + (idx+1) + ' 첨부됨', 'success');
-  });
+  };
+  reader.readAsDataURL(file);
 }
 
 function resizeImage(file, maxPx, cb) {
