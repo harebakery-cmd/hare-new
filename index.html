@@ -2162,6 +2162,7 @@ function loadDefaultFirebase() {
 /* ══════════════════════════════════════════════════ */
 let editAllergenState = {};
 let _editCurrentId = null;
+let _editProductSnapshot = null;
 
 /* 상세 모달의 "수정" 버튼에서 호출 */
 function openEditModal() {
@@ -2178,6 +2179,7 @@ function openEditById(id) {
   db.ref('products/' + id).once('value', snap => {
     const p = snap.val();
     if (!p) { toast('데이터를 불러올 수 없습니다', 'error'); return; }
+    _editProductSnapshot = p;
 
     /* 기본 정보 */
     document.getElementById('editName').value  = p.제품이름 || '';
@@ -2267,6 +2269,39 @@ async function saveEdit() {
     ALLERGENS.forEach(a => { updates[a] = editAllergenState[a] ? 'Yes' : 'No'; });
 
     await db.ref('products/' + id).update(updates);
+    if (historyAdminUnlocked && _editProductSnapshot) {
+      const p = _editProductSnapshot;
+      const changes = [];
+
+      if ((p.제품이름 || '') !== updates.제품이름) changes.push('제품이름: ' + (p.제품이름 || '(없음)') + ' → ' + updates.제품이름);
+      if ((p.카테고리 || '') !== updates.카테고리) changes.push('카테고리: ' + (p.카테고리 || '(없음)') + ' → ' + updates.카테고리);
+      if ((Number(p.판매금액) || 0) !== updates.판매금액) changes.push('판매금액: ' + (Number(p.판매금액) || 0).toLocaleString('ko-KR') + ' → ' + updates.판매금액.toLocaleString('ko-KR'));
+      if ((p.비고 || '') !== updates.비고) changes.push('비고: ' + (p.비고 || '(없음)') + ' → ' + (updates.비고 || '(없음)'));
+
+      const oldOrigin = p.원산지 || [];
+      [0,1,2].forEach(i => {
+        const oldN = (oldOrigin[i] && oldOrigin[i].name) || '';
+        const oldC = (oldOrigin[i] && oldOrigin[i].country) || '';
+        const newN = origin[i].name;
+        const newC = origin[i].country;
+        if (oldN !== newN || oldC !== newC) {
+          changes.push('원산지 '+(i+1)+'순위: '+(oldN||'(없음)')+'·'+(oldC||'(없음)')+' → '+(newN||'(없음)')+'·'+(newC||'(없음)'));
+        }
+      });
+
+      const addedAllergens = ALLERGENS.filter(a => editAllergenState[a] && p[a] !== 'Yes');
+      const removedAllergens = ALLERGENS.filter(a => !editAllergenState[a] && p[a] === 'Yes');
+      if (addedAllergens.length) changes.push('알레르기 추가: ' + addedAllergens.join(', '));
+      if (removedAllergens.length) changes.push('알레르기 제거: ' + removedAllergens.join(', '));
+
+      await db.ref('products/' + id + '/관리자확인로그').push({
+        adminName: '관리자',
+        date: nowStr(),
+        ts: Date.now(),
+        changes: changes.length ? changes : ['변경 없음 (관리자 모드 수정 저장)'],
+        memo: '등록 이력 관리자 모드에서 품목 수정',
+      });
+    }
     toast('✅ 수정 완료!', 'success');
     closeEditModal();
     loadHistory();
@@ -2280,6 +2315,7 @@ async function saveEdit() {
 function closeEditModal() {
   document.getElementById('editModal').classList.remove('open');
   _editCurrentId = null;
+  _editProductSnapshot = null;
 }
 
 
