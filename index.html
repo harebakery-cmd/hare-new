@@ -2328,8 +2328,6 @@ function copyShareText() {
     // Firebase 설정 공유 텍스트 모드
     const cfg = getSavedFirebaseCfg() || FB_CFG;
     const text = `[신제품 등록 시스템 · Firebase 설정]\nProject ID  : ${cfg.projectId}\nAPI Key     : ${cfg.apiKey}\nDatabase URL: ${cfg.databaseURL}\nAuth Domain : ${cfg.authDomain}\nApp ID      : ${cfg.appId}\n\n▶ 설정 탭에서 위 값을 입력하고 [저장 및 재연결] 클릭`;
-    const box = document.getElementById('fbShareBox');
-    if (box) { box.textContent = text; box.style.display = 'block'; }
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('📋 공유 텍스트가 복사되었습니다', 'success'));
     return;
   }
