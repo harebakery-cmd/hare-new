@@ -536,7 +536,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <div class="origin-row">
         <span class="origin-rank">2순위<span class="required" style="font-size:10px">*</span></span>
         <div class="fg origin-combo" style="margin:0">
-          <input type="text" id="origin2-text" placeholder="예: 시앤오데어리브랜드(호주산)" autocomplete="off"
+          <input type="text" id="origin2-text" placeholder="예: 설탕(원료당:호주산)" autocomplete="off"
             oninput="updatePreview();renderOriginPanel('origin2-text')"
             onfocus="openOriginPanel('origin2-text')" onblur="scheduleCloseOriginPanel('origin2-text')">
           <div class="origin-panel" id="origin2-text-panel"></div>
@@ -1357,11 +1357,37 @@ function loadOriginList() {
   });
 }
 
+// Splits an origin string on top-level commas only — commas that fall
+// inside (), [], or {} are treated as part of that single entry
+// (e.g. "밀가루(밀:미국,캐나다산), 호두(미국산)" → ["밀가루(밀:미국,캐나다산)", "호두(미국산)"]).
+// Shared with the 쇼카드 출력 시스템's origin field, which lets staff type
+// several comma-separated origin phrases into one box.
+function splitOriginEntries(value) {
+  const s = String(value || '');
+  const parts = [];
+  let cur = '';
+  let depth = 0;
+  for (const ch of s) {
+    if (ch === '(' || ch === '[' || ch === '{') depth++;
+    else if (ch === ')' || ch === ']' || ch === '}') depth = Math.max(0, depth - 1);
+    if (ch === ',' && depth === 0) {
+      parts.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts.filter(Boolean);
+}
+
 function saveOriginIfNew(value) {
-  const v = (value || '').trim();
-  if (!v || !db || originList.includes(v)) return;
-  originList = Array.from(new Set([...originList, v])).sort((a, b) => a.localeCompare(b, 'ko'));
-  db.ref('origins').push(v);
+  if (!db) return;
+  const entries = splitOriginEntries(value);
+  const newOnes = entries.filter(v => v && !originList.includes(v));
+  if (newOnes.length === 0) return;
+  originList = Array.from(new Set([...originList, ...newOnes])).sort((a, b) => a.localeCompare(b, 'ko'));
+  newOnes.forEach(v => db.ref('origins').push(v));
 }
 
 function openOriginPanel(inputId) {
@@ -1396,10 +1422,14 @@ function renderOriginPanel(inputId) {
   const raw = inp.value || '';
   const q = raw.trim().toLowerCase();
   const matches = q ? originList.filter(o => o.toLowerCase().includes(q)) : originList;
-  const exact = originList.some(o => o === raw.trim());
+  const entries = splitOriginEntries(raw);
+  const newEntryCount = entries.filter(e => !originList.includes(e)).length;
   let html = '';
-  if (!exact && raw.trim()) {
-    html += `<div class="origin-opt origin-opt-new" onmousedown="event.preventDefault();saveOriginIfNew(document.getElementById('${inputId}').value);renderOriginPanel('${inputId}')">＋ "${esc(raw.trim())}" 새 표기로 저장</div>`;
+  if (newEntryCount > 0) {
+    const label = entries.length > 1
+      ? `＋ 새 표기 ${newEntryCount}개 저장 (쉼표로 구분됨)`
+      : `＋ "${esc(raw.trim())}" 새 표기로 저장`;
+    html += `<div class="origin-opt origin-opt-new" onmousedown="event.preventDefault();saveOriginIfNew(document.getElementById('${inputId}').value);renderOriginPanel('${inputId}')">${label}</div>`;
   }
   if (matches.length === 0 && !raw.trim()) {
     html += `<div class="origin-opt-empty">아직 저장된 원산지 표기가 없어요.<br>직접 입력하면 자동으로 목록에 저장됩니다.</div>`;
