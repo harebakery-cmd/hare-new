@@ -747,6 +747,9 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
     <button class="history-tab" id="tab-done" onclick="switchHistoryTab('done')">
       ✅ 완료 <span id="tab-done-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(26,125,68,.15);color:var(--success);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
     </button>
+    <button class="history-tab" id="tab-uncategorized" onclick="switchHistoryTab('uncategorized')">
+      🗂 카테고리 미등록 <span id="tab-uncategorized-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(100,116,139,.15);color:var(--text2);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
+    </button>
   </div>
 
   <!-- 데스크탑 테이블 -->
@@ -1390,6 +1393,10 @@ function saveOriginIfNew(value) {
   newOnes.forEach(v => db.ref('origins').push(v));
 }
 
+function canWriteSharedOrigin(inputId) {
+  return !['origin1-text', 'origin2-text', 'origin3-text'].includes(inputId);
+}
+
 function openOriginPanel(inputId) {
   renderOriginPanel(inputId);
   const panel = document.getElementById(inputId + '-panel');
@@ -1403,7 +1410,7 @@ function closeOriginPanel(inputId) {
 
 function scheduleCloseOriginPanel(inputId) {
   const inp = document.getElementById(inputId);
-  if (inp) saveOriginIfNew(inp.value);
+  if (inp && canWriteSharedOrigin(inputId)) saveOriginIfNew(inp.value);
   setTimeout(() => closeOriginPanel(inputId), 150);
 }
 
@@ -1462,7 +1469,9 @@ function renderOriginPanel(inputId) {
     const label = entries.length > 1
       ? `＋ 새 표기 ${newEntryCount}개 저장 (쉼표로 구분됨)`
       : `＋ "${esc(raw.trim())}" 새 표기로 저장`;
-    html += `<div class="origin-opt origin-opt-new" onmousedown="event.preventDefault();saveOriginIfNew(document.getElementById('${inputId}').value);renderOriginPanel('${inputId}')">${label}</div>`;
+    if (canWriteSharedOrigin(inputId)) {
+      html += `<div class="origin-opt origin-opt-new" onmousedown="event.preventDefault();saveOriginIfNew(document.getElementById('${inputId}').value);renderOriginPanel('${inputId}')">${label}</div>`;
+    }
   }
   if (matches.length === 0 && !raw.trim()) {
     html += `<div class="origin-opt-empty">아직 저장된 원산지 표기가 없어요.<br>직접 입력하면 자동으로 목록에 저장됩니다.</div>`;
@@ -1661,6 +1670,22 @@ function updatePreview() {
   `;
 }
 
+function normalizeProductName(name) {
+  return String(name || '').trim().replace(/\s+/g, ' ');
+}
+
+async function findProductKeyByName(name) {
+  if (!db) return null;
+  const target = normalizeProductName(name).toLowerCase();
+  if (!target) return null;
+  const snap = await db.ref('products').get();
+  const data = snap.val() || {};
+  const found = Object.entries(data).find(([key, p]) =>
+    p && normalizeProductName(p.제품이름).toLowerCase() === target
+  );
+  return found ? found[0] : null;
+}
+
 async function registerProduct() {
   const name = document.getElementById('fName').value.trim();
   if (!name) { toast('제품이름을 입력해주세요', 'error'); document.getElementById('fName').focus(); document.getElementById('fName').classList.add('field-error'); return; }
@@ -1702,7 +1727,8 @@ async function registerProduct() {
   const btn = document.getElementById('registerBtn');
   btn.disabled = true; btn.textContent = '⏳ 등록 중...';
   try {
-    const id = 'new_' + Date.now();
+    const existingId = await findProductKeyByName(name);
+    const id = existingId || 'new_' + Date.now();
     const now = new Date();
     const dateStr = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
     const origin = [
@@ -1715,7 +1741,7 @@ async function registerProduct() {
       cost: Math.round(r.qty * (UNIT_TO_KG[r.unit]||1) * r.unitPrice)
     }));
     const product = {
-      _id: id, _newProduct: true,
+      _id: id, _newProduct: true, _hidden: false, _showcardOriginOnly: false,
       제품이름: name, 카테고리: cat, 판매금액: price,
       원산지: origin, 원산지이미지: originImages.filter(Boolean),
       배합표: recipe, 비고: document.getElementById('fNote').value.trim(),
@@ -1724,7 +1750,7 @@ async function registerProduct() {
     };
     ALLERGENS.forEach(a => { product[a] = allergenState[a] ? 'Yes' : 'No'; });
     if (!db) throw new Error('Firebase 미연결');
-    await db.ref('products/' + id).set(product);
+    await db.ref('products/' + id).update(product);
     lastRegistered = product;
     toast('✅ ' + name + ' 등록 완료!', 'success');
     showSuccessModal(product);
@@ -1893,11 +1919,13 @@ async function loadHistory() {
   }
 }
 
-function updateTabCounts(pending, done) {
+function updateTabCounts(pending, done, uncategorized = []) {
   const pc = document.getElementById('tab-pending-count');
   const dc = document.getElementById('tab-done-count');
+  const uc = document.getElementById('tab-uncategorized-count');
   if (pc) pc.textContent = pending.length || '';
   if (dc) dc.textContent = done.length || '';
+  if (uc) uc.textContent = uncategorized.length || '';
 }
 
 function filterHistory() {
@@ -1915,10 +1943,12 @@ function filterHistory() {
       })
     : historyCache;
 
-  const pending = searched.filter(p => !p.완료처리);
-  const done    = searched.filter(p =>  p.완료처리);
-  updateTabCounts(pending, done);
-  const filtered = historyTab === 'done' ? done : pending;
+  const uncategorized = searched.filter(p => p._hidden && !(p.카테고리 || '').trim());
+  const normalHistory = searched.filter(p => !p._hidden || (p.카테고리 || '').trim());
+  const pending = normalHistory.filter(p => !p.완료처리);
+  const done    = normalHistory.filter(p =>  p.완료처리);
+  updateTabCounts(pending, done, uncategorized);
+  const filtered = historyTab === 'done' ? done : historyTab === 'uncategorized' ? uncategorized : pending;
 
   const tbody   = document.getElementById('historyBody');
   const empty   = document.getElementById('historyEmpty');
@@ -1926,7 +1956,7 @@ function filterHistory() {
   const cardEmpty = document.getElementById('historyCardEmpty');
   const countEl = document.getElementById('historyCount');
 
-  const total = historyTab === 'done' ? done.length : pending.length;
+  const total = historyTab === 'done' ? done.length : historyTab === 'uncategorized' ? uncategorized.length : pending.length;
   countEl.textContent = q ? `${filtered.length} / ${total}건` : `총 ${total}건`;
 
   if (filtered.length === 0) {
@@ -1936,6 +1966,8 @@ function filterHistory() {
       ? `<div class="ei">🔍</div>"${q}" 검색 결과가 없습니다`
       : historyTab === 'done'
         ? `<div class="ei">✅</div>완료된 품목이 없습니다`
+        : historyTab === 'uncategorized'
+          ? `<div class="ei">🗂</div>카테고리 미등록 품목이 없습니다`
         : `<div class="ei">📋</div>신청중인 품목이 없습니다`;
     empty.innerHTML = msg; cardEmpty.innerHTML = msg;
     return;
@@ -1970,7 +2002,7 @@ function filterHistory() {
       </td>
       <td class="name-cell">
         <span class="product-name-link" onclick="openProductDetail('${p._id}')">${highlight(p.제품이름||'', q)}</span>
-        ${p.완료처리 ? '<span class="done-check-icon" title="완료">✓</span>' : '<span class="new-chip">신제품</span>'}
+          ${historyTab === 'uncategorized' ? '<span class="new-chip">미등록</span>' : p.완료처리 ? '<span class="done-check-icon" title="완료">✓</span>' : '<span class="new-chip">신제품</span>'}
       </td>
       <td style="font-family:var(--mono);color:var(--accent)">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</td>
       <td><div class="origin-stack">${originHtml}</div></td>
@@ -2004,7 +2036,7 @@ function filterHistory() {
       <div class="hc-top">
         <div class="hc-name">
           ${highlight(p.제품이름||'', q)}
-          ${p.완료처리 ? '<span class="done-check-icon" title="완료">✓</span>' : '<span class="new-chip" style="font-size:9px;margin-left:5px">신제품</span>'}
+          ${historyTab === 'uncategorized' ? '<span class="new-chip" style="font-size:9px;margin-left:5px">미등록</span>' : p.완료처리 ? '<span class="done-check-icon" title="완료">✓</span>' : '<span class="new-chip" style="font-size:9px;margin-left:5px">신제품</span>'}
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <div class="hc-price">${p.판매금액 ? '₩'+Number(p.판매금액).toLocaleString('ko-KR') : '-'}</div>
@@ -2618,16 +2650,29 @@ async function saveEdit() {
       { rank:3, text:o3t },
     ];
     const storeSel = getSelectedStoreNames(editSelectedStores);
+    const newCat = document.getElementById('editCat').value;
+
+    // 쇼카드에서만 등록되어 "카테고리 미등록"으로 숨김 처리된 품목에
+    // 관리자가 여기서 정식 카테고리를 지정하면, 알러지 시스템 노출 숨김을
+    // 해제하고 정식 신제품으로 승격시킨다.
+    const wasUncategorized = !!(_editProductSnapshot && (_editProductSnapshot._hidden || _editProductSnapshot._showcardOriginOnly) && !(_editProductSnapshot.카테고리 || '').trim());
+    const promoting = wasUncategorized && !!newCat;
 
     const updates = {
       제품이름: name,
-      카테고리: document.getElementById('editCat').value,
+      카테고리: newCat,
       판매금액: parseFloat(document.getElementById('editPrice').value) || 0,
       비고: document.getElementById('editNote').value.trim(),
       원산지: origin,
       판매점포: storeSel,
     };
     ALLERGENS.forEach(a => { updates[a] = editAllergenState[a] ? 'Yes' : 'No'; });
+    if (promoting) {
+      updates._hidden = false;
+      updates._showcardOriginOnly = false;
+      updates._newProduct = true;
+      updates.등록상태 = '신제품';
+    }
 
     await db.ref('products/' + id).update(updates);
     if (historyAdminUnlocked && _editProductSnapshot) {
@@ -2662,7 +2707,7 @@ async function saveEdit() {
         memo: '등록 이력 관리자 모드에서 품목 수정',
       });
     }
-    toast('✅ 수정 완료!', 'success');
+    toast(promoting ? '✅ 카테고리 지정 완료 — 알러지 시스템에 정식 노출됩니다' : '✅ 수정 완료!', 'success');
     closeEditModal();
     loadHistory();
   } catch(e) {
