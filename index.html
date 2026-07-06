@@ -1816,6 +1816,7 @@ let historyAdminUnlocked = false;
 
 /* ── 탭 전환 ── */
 function switchHistoryTab(tab) {
+  if (tab === 'uncategorized') tab = 'pending';
   historyTab = tab;
   document.querySelectorAll('.history-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
@@ -1907,7 +1908,8 @@ async function loadHistory() {
       updateTabCounts([], []);
       return;
     }
-    historyCache = Object.values(val).sort((a,b) => {
+    if (historyTab === 'uncategorized') historyTab = 'pending';
+    historyCache = Object.values(val).filter(isVisibleHistoryProduct).sort((a,b) => {
       const ta = a._id ? a._id.replace('new_','') : '0';
       const tb = b._id ? b._id.replace('new_','') : '0';
       return parseInt(tb) - parseInt(ta);
