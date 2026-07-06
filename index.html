@@ -747,7 +747,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
     <button class="history-tab" id="tab-done" onclick="switchHistoryTab('done')">
       ✅ 완료 <span id="tab-done-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(26,125,68,.15);color:var(--success);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
     </button>
-    <button class="history-tab" id="tab-uncategorized" onclick="switchHistoryTab('uncategorized')">
+    <button class="history-tab" id="tab-uncategorized" onclick="switchHistoryTab('uncategorized')" style="display:none">
       🗂 카테고리 미등록 <span id="tab-uncategorized-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(100,116,139,.15);color:var(--text2);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
     </button>
   </div>
@@ -1928,6 +1928,13 @@ function updateTabCounts(pending, done, uncategorized = []) {
   if (uc) uc.textContent = uncategorized.length || '';
 }
 
+function isVisibleHistoryProduct(p) {
+  if (!p) return false;
+  if (p._hidden || p._showcardOriginOnly) return false;
+  if (!(p.카테고리 || '').trim()) return false;
+  return true;
+}
+
 function filterHistory() {
   const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
   const searched = q
@@ -1943,8 +1950,9 @@ function filterHistory() {
       })
     : historyCache;
 
-  const uncategorized = searched.filter(p => p._hidden && !(p.카테고리 || '').trim());
-  const normalHistory = searched.filter(p => !p._hidden || (p.카테고리 || '').trim());
+  const visibleHistory = searched.filter(isVisibleHistoryProduct);
+  const uncategorized = [];
+  const normalHistory = visibleHistory;
   const pending = normalHistory.filter(p => !p.완료처리);
   const done    = normalHistory.filter(p =>  p.완료처리);
   updateTabCounts(pending, done, uncategorized);
