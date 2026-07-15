@@ -553,7 +553,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       </div>
     </div>
     <div style="margin-top:14px">
-      <label style="display:flex;align-items:center;gap:0">원산지 증빙 이미지 첨부 <span style="font-size:10px;color:var(--text3);margin-left:4px">(최대 3개 · JPG/PNG)</span>
+      <label style="display:flex;align-items:center;gap:0">원산지 증빙 이미지 첨부 <span style="font-size:10px;color:var(--text3);margin-left:4px">(최대 3개 · JPG/PNG/WEBP · 자동 압축 후 파일당 5MB 이하)</span>
         <span class="tip-wrap" id="originImgTipWrap">
           <span class="tip-icon">?</span>
           <span class="tip-box" id="originImgTipBox">
@@ -568,16 +568,16 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       </label>
       <div class="origin-images-wrap">
         <div class="origin-img-slot" id="imgSlot0" onclick="triggerImgInput(0)">
-          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 1</span>
-          <input type="file" accept="image/*" id="imgInput0" onchange="handleOriginImg(0,this)" style="display:none" onclick="event.stopPropagation()">
+          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 1</span><span style="font-size:9px">자동 압축 · 5MB 이하</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" id="imgInput0" onchange="handleOriginImg(0,this)" style="display:none" onclick="event.stopPropagation()">
         </div>
         <div class="origin-img-slot" id="imgSlot1" onclick="triggerImgInput(1)">
-          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 2</span>
-          <input type="file" accept="image/*" id="imgInput1" onchange="handleOriginImg(1,this)" style="display:none" onclick="event.stopPropagation()">
+          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 2</span><span style="font-size:9px">자동 압축 · 5MB 이하</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" id="imgInput1" onchange="handleOriginImg(1,this)" style="display:none" onclick="event.stopPropagation()">
         </div>
         <div class="origin-img-slot" id="imgSlot2" onclick="triggerImgInput(2)">
-          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 3</span>
-          <input type="file" accept="image/*" id="imgInput2" onchange="handleOriginImg(2,this)" style="display:none" onclick="event.stopPropagation()">
+          <span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 3</span><span style="font-size:9px">자동 압축 · 5MB 이하</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" id="imgInput2" onchange="handleOriginImg(2,this)" style="display:none" onclick="event.stopPropagation()">
         </div>
       </div>
     </div>
@@ -845,10 +845,10 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="guideImgWrap"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button class="btn btn-secondary btn-sm" onclick="addGuideImgSlot()">+ 가이드 이미지 추가</button>
+    <button class="btn btn-secondary btn-sm" onclick="addGuideImgSlot()">가이드 이미지 교체 안내</button>
     <button class="btn btn-ghost btn-sm" onclick="clearGuideImgs()">🗑 전체 삭제</button>
   </div>
-  <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 이미지는 Firebase에 저장되어 모든 직원과 실시간 공유됩니다</div>
+  <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 가이드 이미지는 GitHub의 고정 파일로 관리됩니다. 5MB 이하 파일을 사용해 주세요.</div>
 </div>
 
 <div class="card">
@@ -863,10 +863,10 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="allergenGuideImgWrap"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button class="btn btn-secondary btn-sm" onclick="addAllergenGuideImg()">+ 가이드 이미지 추가</button>
+    <button class="btn btn-secondary btn-sm" onclick="addAllergenGuideImg()">가이드 이미지 교체 안내</button>
     <button class="btn btn-ghost btn-sm" onclick="clearAllergenGuideImgs()">🗑 전체 삭제</button>
   </div>
-  <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 이미지는 Firebase에 저장되어 모든 직원과 실시간 공유됩니다</div>
+  <div style="margin-top:10px;font-size:11px;color:var(--text3)">※ 가이드 이미지는 GitHub의 고정 파일로 관리됩니다. 5MB 이하 파일을 사용해 주세요.</div>
 </div>
 
 <div class="card">
@@ -1130,6 +1130,10 @@ const FB_CFG = {
   appId:'1:911606541886:web:5212605597ff4aff67eb6f'
 };
 
+const CLOUDINARY_CLOUD_NAME = 'dq1edmat';
+const CLOUDINARY_UPLOAD_PRESET = 'hare-allergen';
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
 let db = null;
 let allergenState = {};
 ALLERGENS.forEach(a => allergenState[a] = false);
@@ -1251,18 +1255,62 @@ function clearAllergens() {
 
 function triggerImgInput(idx) { document.getElementById('imgInput' + idx).click(); }
 
-function handleOriginImg(idx, inp) {
-  const file = inp.files[0];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+function loadUploadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('JPG, PNG, WEBP 이미지만 등록할 수 있습니다'));
+    img.src = src;
+  });
+}
+async function compressImageForUpload(file) {
+  if (!file || !file.type.startsWith('image/')) throw new Error('이미지 파일만 등록할 수 있습니다');
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await loadUploadImage(objectUrl);
+    const maxSide = 2000;
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    let blob = null;
+    for (const quality of [0.82, 0.72, 0.62, 0.52]) {
+      blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', quality));
+      if (blob && blob.size <= MAX_IMAGE_UPLOAD_BYTES) break;
+    }
+    if (!blob) throw new Error('이 브라우저에서는 이미지 압축을 할 수 없습니다');
+    if (blob.size > MAX_IMAGE_UPLOAD_BYTES) throw new Error('자동 압축 후에도 5MB를 초과합니다. 더 작은 사진을 선택해주세요');
+    const baseName = (file.name || 'image').replace(/\.[^.]+$/, '');
+    return new File([blob], `${baseName}.webp`, { type: 'image/webp' });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function handleOriginImg(idx, inp) {
+  const file = inp.files && inp.files[0];
+  inp.value = '';
   if (!file) return;
-  // 원본 이미지 그대로 저장 (압축/리사이즈 없음)
-  const reader = new FileReader();
-  reader.onload = e => {
-    const dataUrl = e.target.result;
-    originImages[idx] = dataUrl;
-    renderImgSlot(idx, dataUrl);
-    toast('이미지 ' + (idx+1) + ' 첨부됨', 'success');
-  };
-  reader.readAsDataURL(file);
+  if (!file.type.startsWith('image/')) { toast('이미지 파일만 등록할 수 있습니다', 'error'); return; }
+  toast('이미지를 자동 압축하고 업로드하는 중입니다', 'success');
+  try {
+    const uploadFile = await compressImageForUpload(file);
+    const form = new FormData();
+    form.append('file', uploadFile);
+    form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    form.append('folder', 'hare-allergen/products');
+    const response = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: form });
+    const result = await response.json();
+    if (!response.ok || !result.secure_url) throw new Error(result.error?.message || 'Cloudinary 업로드 실패');
+    originImages[idx] = result.secure_url;
+    renderImgSlot(idx, result.secure_url);
+    toast('이미지가 업로드되었습니다', 'success');
+  } catch (err) {
+    console.error(err);
+    toast('이미지 업로드 실패: ' + err.message, 'error');
+  }
 }
 
 function resizeImage(file, maxPx, cb) {
@@ -1290,7 +1338,7 @@ function renderImgSlot(idx, dataUrl) {
   slot.innerHTML = `
     <img src="${dataUrl}" alt="원산지 이미지 ${idx+1}" loading="lazy" decoding="async">
     <button class="img-del" onclick="removeOriginImg(${idx},event)">✕</button>
-    <input type="file" accept="image/*" id="imgInput${idx}" onchange="handleOriginImg(${idx},this)" style="display:none" onclick="event.stopPropagation()">
+    <input type="file" accept="image/jpeg,image/png,image/webp" id="imgInput${idx}" onchange="handleOriginImg(${idx},this)" style="display:none" onclick="event.stopPropagation()">
   `;
 }
 
@@ -1301,7 +1349,8 @@ function removeOriginImg(idx, e) {
   slot.innerHTML = `
     <span style="font-size:18px;margin-bottom:2px">📷</span>
     <span>이미지 ${idx+1}</span>
-    <input type="file" accept="image/*" id="imgInput${idx}" onchange="handleOriginImg(${idx},this)" style="display:none" onclick="event.stopPropagation()">
+    <span style="font-size:9px">자동 압축 · 5MB 이하</span>
+    <input type="file" accept="image/jpeg,image/png,image/webp" id="imgInput${idx}" onchange="handleOriginImg(${idx},this)" style="display:none" onclick="event.stopPropagation()">
   `;
 }
 
@@ -1792,7 +1841,7 @@ function resetForm() {
   originImages = [null,null,null];
   for(let i=0;i<3;i++) {
     const s = document.getElementById('imgSlot'+i);
-    s.innerHTML = `<span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 ${i+1}</span><input type="file" accept="image/*" id="imgInput${i}" onchange="handleOriginImg(${i},this)" style="display:none" onclick="event.stopPropagation()">`;
+    s.innerHTML = `<span style="font-size:18px;margin-bottom:2px">📷</span><span>이미지 ${i+1}</span><span style="font-size:9px">자동 압축 · 5MB 이하</span><input type="file" accept="image/jpeg,image/png,image/webp" id="imgInput${i}" onchange="handleOriginImg(${i},this)" style="display:none" onclick="event.stopPropagation()">`;
   }
   clearAllergens();
   allergenConfirmed = false;
