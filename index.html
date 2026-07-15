@@ -1121,13 +1121,13 @@ const ALLERGENS = ['계란','우유','메밀','땅콩','대두','밀','고등어
 const CATS = ['식빵/발효빵/식사빵','일반빵','케이크/롤/파운드','쿠키/정과','샌드위치/마카롱/초콜릿/잼/냉장','시즌'];
 const CAT_COLORS = {'식빵/발효빵/식사빵':'#e8a87c','일반빵':'#85c1e9','케이크/롤/파운드':'#f1948a','쿠키/정과':'#82e0aa','샌드위치/마카롱/초콜릿/잼/냉장':'#c39bd3','시즌':'#f7dc6f'};
 const FB_CFG = {
-  apiKey:'AIzaSyB-1hk5BHsqf70Eo23_YGe5R7lV4_xTh9I',
-  authDomain:'hare-allergen.firebaseapp.com',
-  databaseURL:'https://hare-allergen-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId:'hare-allergen',
-  storageBucket:'hare-allergen.firebasestorage.app',
-  messagingSenderId:'988530050491',
-  appId:'1:988530050491:web:7fae0173b5c83f471b709e'
+  apiKey:'AIzaSyAJXGK8ga0syK5sozMkSQFkrChAL-u8GUM',
+  authDomain:'hare-allergen1.firebaseapp.com',
+  databaseURL:'https://hare-allergen1-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:'hare-allergen1',
+  storageBucket:'hare-allergen1.firebasestorage.app',
+  messagingSenderId:'911606541886',
+  appId:'1:911606541886:web:5212605597ff4aff67eb6f'
 };
 
 let db = null;
@@ -2523,7 +2523,11 @@ function changeSettingsPw() {
 function getSavedFirebaseCfg() {
   try {
     const s = JSON.parse(localStorage.getItem('reg_firebase_cfg') || 'null');
-    if (s && s.apiKey && s.databaseURL) return s;
+    // 이전 프로젝트 설정이 브라우저에 남아 있어도 새 프로젝트로 연결한다.
+    if (s && s.projectId === 'hare-allergen1' && s.apiKey && s.databaseURL) return s;
+    if (s && s.projectId && s.projectId !== 'hare-allergen1') {
+      localStorage.removeItem('reg_firebase_cfg');
+    }
   } catch(e) {}
   return null;
 }
@@ -2555,7 +2559,7 @@ function saveFirebaseSettings() {
 }
 
 function loadDefaultFirebase() {
-  if (!confirm('기본 Firebase 설정(hare-allergen)으로 복원할까요?')) return;
+  if (!confirm('기본 Firebase 설정(hare-allergen1)으로 복원할까요?')) return;
   localStorage.removeItem('reg_firebase_cfg');
   loadFirebaseSettingsInputs();
   toast('기본값으로 복원됨', 'success');
