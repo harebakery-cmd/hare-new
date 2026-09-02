@@ -1081,6 +1081,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       🗂 카테고리 미등록 <span id="tab-uncategorized-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(100,116,139,.15);color:var(--text2);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
     </button>
   </div>
+  <div style="margin:-6px 2px 14px;font-size:11px;color:var(--text3)">완료 항목은 완료일 기준 최근 1개월간 보관되며, 등록 이력을 열 때 오래된 항목이 자동 삭제됩니다.</div>
 
   <!-- 데스크탑 테이블 -->
   <div class="history-table-wrap card" style="padding:0;overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch">
@@ -2249,6 +2250,7 @@ function resetForm() {
 let historyCache = [];
 let historyTab = 'pending'; // 'pending' | 'done'
 let historyAdminUnlocked = false;
+const COMPLETED_HISTORY_RETENTION_MONTHS = 1;
 
 /* ── 탭 전환 ── */
 function switchHistoryTab(tab) {
@@ -2316,17 +2318,69 @@ async function toggleProductDone(id, currentDone) {
   if (!db) return;
   const newDone = !currentDone;
   try {
-    await db.ref('products/' + id + '/완료처리').set(newDone ? true : null);
+    const updates = {};
+    updates['products/' + id + '/완료처리'] = newDone ? true : null;
     if (newDone) {
-      await db.ref('products/' + id + '/완료일시').set(nowStr());
+      updates['products/' + id + '/완료일시'] = nowStr();
+      updates['products/' + id + '/완료타임스탬프'] = firebase.database.ServerValue.TIMESTAMP;
     } else {
-      await db.ref('products/' + id + '/완료일시').remove();
+      updates['products/' + id + '/완료일시'] = null;
+      updates['products/' + id + '/완료타임스탬프'] = null;
     }
+    await db.ref().update(updates);
     toast(newDone ? '✅ 완료 처리되었습니다' : '↩ 신청중으로 되돌렸습니다', 'success');
     loadHistory();
   } catch(e) {
     toast('처리 실패: ' + e.message, 'error');
   }
+}
+
+function completedHistoryCutoff(now = new Date()) {
+  const cutoff = new Date(now);
+  const originalDay = cutoff.getDate();
+  cutoff.setDate(1);
+  cutoff.setMonth(cutoff.getMonth() - COMPLETED_HISTORY_RETENTION_MONTHS);
+  const lastDayOfTargetMonth = new Date(cutoff.getFullYear(), cutoff.getMonth() + 1, 0).getDate();
+  cutoff.setDate(Math.min(originalDay, lastDayOfTargetMonth));
+  cutoff.setHours(0, 0, 0, 0);
+  return cutoff.getTime();
+}
+
+function parseSavedDateTime(value) {
+  const match = String(value || '').trim().match(/^(\d{4})[.\/-]\s*(\d{1,2})[.\/-]\s*(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (!match) return null;
+  const date = new Date(
+    Number(match[1]), Number(match[2]) - 1, Number(match[3]),
+    Number(match[4] || 0), Number(match[5] || 0)
+  );
+  return Number.isNaN(date.getTime()) ? null : date.getTime();
+}
+
+function getCompletedTimestamp(product) {
+  const savedTimestamp = Number(product && product.완료타임스탬프);
+  if (Number.isFinite(savedTimestamp) && savedTimestamp > 0) return savedTimestamp;
+  return parseSavedDateTime(product && product.완료일시);
+}
+
+async function removeExpiredCompletedHistory(productsById) {
+  const cutoff = completedHistoryCutoff();
+  const updates = {};
+  const expiredIds = [];
+
+  Object.entries(productsById || {}).forEach(([id, product]) => {
+    if (!product || !product.완료처리) return;
+    const completedAt = getCompletedTimestamp(product);
+    if (completedAt !== null && completedAt < cutoff) {
+      updates['products/' + id] = null;
+      expiredIds.push(id);
+    }
+  });
+
+  if (!expiredIds.length) return productsById;
+  await db.ref().update(updates);
+  expiredIds.forEach(id => delete productsById[id]);
+  toast('보관 기간이 지난 완료 항목 ' + expiredIds.length + '건을 자동 삭제했습니다', 'success');
+  return productsById;
 }
 
 async function loadHistory() {
@@ -2343,6 +2397,12 @@ async function loadHistory() {
       historyCache = []; tbody.innerHTML = ''; empty.style.display = 'block';
       updateTabCounts([], []);
       return;
+    }
+    try {
+      await removeExpiredCompletedHistory(val);
+    } catch(cleanupError) {
+      console.error('Completed history cleanup failed', cleanupError);
+      toast('오래된 완료 항목 자동 삭제에 실패했습니다: ' + cleanupError.message, 'error');
     }
     if (historyTab === 'uncategorized') historyTab = 'pending';
     historyCache = Object.values(val).filter(isVisibleHistoryProduct).sort((a,b) => {
