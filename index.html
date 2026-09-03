@@ -1081,7 +1081,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       🗂 카테고리 미등록 <span id="tab-uncategorized-count" style="font-size:10px;padding:1px 7px;border-radius:20px;background:rgba(100,116,139,.15);color:var(--text2);font-weight:700;margin-left:5px;font-family:var(--mono)"></span>
     </button>
   </div>
-  <div style="margin:-6px 2px 14px;font-size:11px;color:var(--text3)">완료 항목은 완료일 기준 최근 1개월간 보관되며, 등록 이력을 열 때 오래된 항목이 자동 삭제됩니다.</div>
+  <div style="margin:-6px 2px 14px;font-size:11px;color:var(--text3)">완료 목록에는 최근 1개월 항목만 표시합니다. 이전 완료 항목은 목록에서만 제외하며, 제품·알레르기·원산지 원본 데이터는 삭제하지 않습니다.</div>
 
   <!-- 데스크탑 테이블 -->
   <div class="history-table-wrap card" style="padding:0;overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch">
@@ -2362,25 +2362,12 @@ function getCompletedTimestamp(product) {
   return parseSavedDateTime(product && product.완료일시);
 }
 
-async function removeExpiredCompletedHistory(productsById) {
-  const cutoff = completedHistoryCutoff();
-  const updates = {};
-  const expiredIds = [];
-
-  Object.entries(productsById || {}).forEach(([id, product]) => {
-    if (!product || !product.완료처리) return;
-    const completedAt = getCompletedTimestamp(product);
-    if (completedAt !== null && completedAt < cutoff) {
-      updates['products/' + id] = null;
-      expiredIds.push(id);
-    }
-  });
-
-  if (!expiredIds.length) return productsById;
-  await db.ref().update(updates);
-  expiredIds.forEach(id => delete productsById[id]);
-  toast('보관 기간이 지난 완료 항목 ' + expiredIds.length + '건을 자동 삭제했습니다', 'success');
-  return productsById;
+// History retention is display-only. Product records are shared with the
+// allergen/origin systems and must never be deleted or modified for retention.
+function isExpiredCompletedHistory(product, now = new Date()) {
+  if (!product || !product.완료처리) return false;
+  const completedAt = getCompletedTimestamp(product);
+  return completedAt !== null && completedAt < completedHistoryCutoff(now);
 }
 
 async function loadHistory() {
@@ -2397,12 +2384,6 @@ async function loadHistory() {
       historyCache = []; tbody.innerHTML = ''; empty.style.display = 'block';
       updateTabCounts([], []);
       return;
-    }
-    try {
-      await removeExpiredCompletedHistory(val);
-    } catch(cleanupError) {
-      console.error('Completed history cleanup failed', cleanupError);
-      toast('오래된 완료 항목 자동 삭제에 실패했습니다: ' + cleanupError.message, 'error');
     }
     if (historyTab === 'uncategorized') historyTab = 'pending';
     historyCache = Object.values(val).filter(isVisibleHistoryProduct).sort((a,b) => {
@@ -2430,6 +2411,7 @@ function isVisibleHistoryProduct(p) {
   if (!p) return false;
   if (p._hidden || p._showcardOriginOnly) return false;
   if (!(p.카테고리 || '').trim()) return false;
+  if (isExpiredCompletedHistory(p)) return false;
   return true;
 }
 
