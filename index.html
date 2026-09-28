@@ -870,7 +870,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
         <span class="origin-rank">1순위<span class="required" style="font-size:10px">*</span></span>
         <div class="fg origin-combo" style="margin:0">
           <input type="text" id="origin1-text" placeholder="예: 밀가루(밀:미국,캐나다산)" autocomplete="off"
-            oninput="updatePreview();renderOriginPanel('origin1-text')"
+            oninput="handleRegistrationOriginInput('origin1-text')"
             onfocus="openOriginPanel('origin1-text')" onblur="scheduleCloseOriginPanel('origin1-text')">
           <div class="origin-panel" id="origin1-text-panel"></div>
         </div>
@@ -879,7 +879,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
         <span class="origin-rank">2순위<span class="required" style="font-size:10px">*</span></span>
         <div class="fg origin-combo" style="margin:0">
           <input type="text" id="origin2-text" placeholder="예: 설탕(원료당:호주산)" autocomplete="off"
-            oninput="updatePreview();renderOriginPanel('origin2-text')"
+            oninput="handleRegistrationOriginInput('origin2-text')"
             onfocus="openOriginPanel('origin2-text')" onblur="scheduleCloseOriginPanel('origin2-text')">
           <div class="origin-panel" id="origin2-text-panel"></div>
         </div>
@@ -888,7 +888,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
         <span class="origin-rank">3순위<span class="required" style="font-size:10px">*</span></span>
         <div class="fg origin-combo" style="margin:0">
           <input type="text" id="origin3-text" placeholder="예: 버터(우유:국산)" autocomplete="off"
-            oninput="updatePreview();renderOriginPanel('origin3-text')"
+            oninput="handleRegistrationOriginInput('origin3-text')"
             onfocus="openOriginPanel('origin3-text')" onblur="scheduleCloseOriginPanel('origin3-text')">
           <div class="origin-panel" id="origin3-text-panel"></div>
         </div>
@@ -1516,6 +1516,8 @@ ALLERGENS.forEach(a => allergenState[a] = false);
 let allergenConfirmed = false;
 let originImages = [null, null, null];
 let originList = [];
+const registrationOriginIds = ['origin1-text','origin2-text','origin3-text'];
+let registrationOriginChosen = {};
 let ingRows = [];
 let rowId = 0;
 let lastRegistered = null;
@@ -1942,7 +1944,26 @@ function selectOrigin(inputId, value) {
   if (!inp) return;
   inp.value = replaceCurrentOriginEntry(inp.value, value);
   inp.dispatchEvent(new Event('input', { bubbles: true }));
+  if (registrationOriginIds.includes(inputId)) {
+    registrationOriginChosen[inputId] = true;
+    updateRegisterBtn();
+  }
   closeOriginPanel(inputId);
+}
+
+function handleRegistrationOriginInput(inputId) {
+  registrationOriginChosen[inputId] = false;
+  updatePreview();
+  renderOriginPanel(inputId);
+}
+
+function acceptTypedOrigin(inputId) {
+  const inp = document.getElementById(inputId);
+  const value = inp ? getCurrentOriginSegment(inp.value).trim() : '';
+  if (!value) return;
+  selectOrigin(inputId, value);
+  // 등록 화면에서 직접 입력을 명시적으로 선택한 경우에만 공유 목록에 추가
+  saveOriginIfNew(value);
 }
 
 function renderOriginPanel(inputId) {
@@ -1950,8 +1971,23 @@ function renderOriginPanel(inputId) {
   const panel = document.getElementById(inputId + '-panel');
   if (!inp || !panel) return;
   const raw = inp.value || '';
-  const q = getCurrentOriginSegment(raw).toLowerCase();
+  const query = getCurrentOriginSegment(raw);
+  const q = query.toLowerCase();
   const matches = q ? originList.filter(o => o.toLowerCase().includes(q)) : originList;
+  if (registrationOriginIds.includes(inputId)) {
+    let choiceHtml = '';
+    if (matches.length) {
+      matches.forEach(o => {
+        choiceHtml += `<div class="origin-opt" onmousedown="event.preventDefault();selectOrigin('${inputId}','${esc(o).replace(/'/g,"\\'")}')">${esc(o)}</div>`;
+      });
+    } else if (query.trim()) {
+      choiceHtml = `<div class="origin-opt origin-opt-new" onmousedown="event.preventDefault();acceptTypedOrigin('${inputId}')">＋ 직접 입력: "${esc(query.trim())}"</div>`;
+    } else {
+      choiceHtml = '<div class="origin-opt-empty">저장된 표기를 검색하거나, 검색 결과가 없을 때 직접 입력할 수 있어요.</div>';
+    }
+    panel.innerHTML = choiceHtml;
+    return;
+  }
   const entries = splitOriginEntries(raw);
   const newEntryCount = entries.filter(e => !originList.includes(e)).length;
   let html = '';
@@ -2147,7 +2183,7 @@ function updateRegisterBtn() {
   const o3 = document.getElementById('origin3-text').value.trim();
   const allergenSelected = ALLERGENS.some(a => allergenState[a]);
   const allergenConfirmedChk = document.getElementById('allergenConfirm').checked;
-  const originOk = o1 && o2 && o3;
+  const originOk = o1 && o2 && o3 && registrationOriginIds.every(id => registrationOriginChosen[id]);
   const ready = name && price > 0 && originOk && (allergenSelected || allergenConfirmedChk);
   const btn = document.getElementById('registerBtn');
   btn.disabled = !ready;
@@ -2159,9 +2195,9 @@ function updateRegisterBtn() {
   const missing = [];
   if (!name) missing.push('제품이름');
   if (price <= 0) missing.push('판매 금액');
-  if (!o1) missing.push('원산지 1순위');
-  if (!o2) missing.push('원산지 2순위');
-  if (!o3) missing.push('원산지 3순위');
+  if (!o1 || !registrationOriginChosen['origin1-text']) missing.push('원산지 1순위 선택');
+  if (!o2 || !registrationOriginChosen['origin2-text']) missing.push('원산지 2순위 선택');
+  if (!o3 || !registrationOriginChosen['origin3-text']) missing.push('원산지 3순위 선택');
   if (!allergenSelected && !allergenConfirmedChk) missing.push('알레르기 확인');
   hintEl.textContent = '미입력: ' + missing.join(', ');
 }
@@ -2216,6 +2252,13 @@ async function registerProduct() {
   const price = parseFloat(document.getElementById('fPrice').value) || 0;
   if (price <= 0) { toast('판매 금액을 입력해주세요', 'error'); document.getElementById('fPrice').focus(); document.getElementById('fPrice').classList.add('field-error'); return; }
   document.getElementById('fPrice').classList.remove('field-error');
+  const invalidOriginId = registrationOriginIds.find(id => !registrationOriginChosen[id]);
+  if (invalidOriginId) {
+    const rank = invalidOriginId.replace('origin','').replace('-text','');
+    toast(`원산지 ${rank}순위는 검색 결과를 선택하거나, 결과가 없을 때 '직접 입력'을 선택해주세요`, 'error');
+    document.getElementById(invalidOriginId).focus();
+    return;
+  }
   const o1text = document.getElementById('origin1-text').value.trim();
   if (!o1text) {
     toast('원산지 1순위를 입력해주세요', 'error');
@@ -2310,6 +2353,7 @@ function resetForm() {
   document.getElementById('fPrice').value = '';
   document.getElementById('fNote').value = '';
   ['origin1-text','origin2-text','origin3-text'].forEach(id => document.getElementById(id).value = '');
+  registrationOriginChosen = {};
   selectAllStores(selectedStores, 'storeGrid');
   originImages = [null,null,null];
   for(let i=0;i<3;i++) {
