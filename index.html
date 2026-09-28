@@ -765,6 +765,25 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
 @media(prefers-contrast:more){
   .card,.cost-panel,.history-toolbar,.history-table-wrap,input,select,textarea{border-color:#737373}
 }
+
+/* 원산지 변경 공지 전광판 */
+.origin-notice{display:flex;align-items:center;gap:12px;overflow:hidden;background:#2f271e;color:#fff;border-radius:9px;margin:0 0 16px;padding:11px 14px;min-height:42px}
+.origin-notice-label{flex:0 0 auto;font-size:11px;font-weight:800;letter-spacing:.04em;color:#f5c56b}
+.origin-notice-viewport{overflow:hidden;min-width:0;flex:1;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.origin-notice-track{display:flex;width:max-content;animation:originNoticeMarquee var(--notice-duration,32s) linear infinite}
+.origin-notice-group{display:flex;align-items:center;flex-shrink:0;white-space:nowrap}
+.origin-notice-item{font-size:12px;font-weight:600;padding-right:46px}
+.origin-notice-item::after{content:"✦";color:#f5c56b;margin-left:46px}
+.origin-notice:hover .origin-notice-track{animation-play-state:paused}
+.origin-notice.empty .origin-notice-track{animation:none;width:100%}
+.origin-notice.empty .origin-notice-item{padding:0;color:rgba(255,255,255,.72);font-weight:500}
+.origin-notice.empty .origin-notice-item::after{display:none}
+@keyframes originNoticeMarquee{to{transform:translateX(-50%)}}
+.notice-admin-list{display:grid;gap:8px;margin-top:14px}
+.notice-admin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.notice-admin-copy{min-width:0;font-size:12px;line-height:1.6;color:var(--text2)}
+.notice-admin-copy strong{color:var(--text)}
+@media(prefers-reduced-motion:reduce){.origin-notice-track{animation:none!important}}
 </style>
 
 </head>
@@ -838,9 +857,13 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <div class="card-title"><span class="section-index">02</span>원산지 정보<span class="card-badge">필수</span><span class="card-badge">배합표 기준 3순위</span></div>
       <span style="font-size:11px;color:var(--text3)" class="hide-mobile">갤러리아점 기준</span>
     </div>
-    <div style="font-size:11px;color:var(--danger);background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:6px;padding:7px 10px;margin-bottom:12px;font-weight:500">
-      ⚠️ 1~3순위를 모두 입력해야 합니다 · 예: 밀가루(밀:미국,캐나다산)
-    </div>
+<div class="origin-notice empty" id="originNotice" role="region" aria-label="원산지 변경 공지">
+  <span class="origin-notice-label">원산지 변경 안내</span>
+  <div class="origin-notice-viewport"><div class="origin-notice-track" id="originNoticeTrack">
+    <div class="origin-notice-group"><span class="origin-notice-item">현재 등록된 원산지 변경 공지가 없습니다.</span></div>
+    <div class="origin-notice-group" aria-hidden="true"><span class="origin-notice-item">현재 등록된 원산지 변경 공지가 없습니다.</span></div>
+  </div></div>
+</div>
     <div class="origin-rows">
       <div class="origin-row">
         <span class="origin-rank">1순위<span class="required" style="font-size:10px">*</span></span>
@@ -1138,6 +1161,26 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <div class="section-title" style="margin:0">⚙️ 설정<span class="section-sub">관리자 전용</span></div>
       <button class="btn btn-ghost btn-sm" onclick="lockSettings()">🔒 잠금</button>
     </div>
+
+<div class="card" id="originNoticeAdminCard">
+  <div class="card-header">
+    <div class="card-title">📣 원산지 변경 공지<span class="card-badge" style="background:var(--accent2)">전광판</span></div>
+    <span style="font-size:11px;color:var(--text3)">등록된 공지는 신제품 등록 화면에 실시간 표시됩니다</span>
+  </div>
+  <div class="input-row">
+    <div class="fg"><label for="noticeProduct">제품명</label><input id="noticeProduct" maxlength="60" placeholder="예: 우유식빵"></div>
+    <div class="fg"><label for="noticeDate">적용일</label><input id="noticeDate" type="date"></div>
+  </div>
+  <div class="input-row">
+    <div class="fg"><label for="noticeOld">변경 전 원산지</label><input id="noticeOld" maxlength="100" placeholder="예: 우유(원유:국산)"></div>
+    <div class="fg"><label for="noticeNew">변경 후 원산지</label><input id="noticeNew" maxlength="100" placeholder="예: 우유(폴란드산)"></div>
+  </div>
+  <div class="input-row" style="align-items:end">
+    <div class="fg"><label for="noticeScope">적용 범위</label><select id="noticeScope"><option>전 지점</option><option>갤러리아점</option><option>둔산점</option><option>도안점</option><option>건양대병원점</option><option>유성점</option><option>둔곡점</option></select></div>
+    <button class="btn btn-primary btn-sm" type="button" onclick="saveOriginNotice()">공지 등록</button>
+  </div>
+  <div class="notice-admin-list" id="originNoticeAdminList"><div style="font-size:12px;color:var(--text3)">공지 불러오는 중...</div></div>
+</div>
 
 <div class="card">
   <div class="card-header">
@@ -1514,6 +1557,47 @@ function originDisplay(o) {
   return '';
 }
 
+
+let originNotices = {};
+function loadOriginNotices(){
+  if(!db)return;
+  db.ref('originNotices').on('value',snap=>{
+    originNotices=snap.val()||{};
+    renderOriginNoticeTicker();
+    renderOriginNoticeAdminList();
+  },err=>console.error('originNotices read error',err));
+}
+function noticeEsc(s){return String(s||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function renderOriginNoticeTicker(){
+  const track=document.getElementById('originNoticeTrack'), box=document.getElementById('originNotice');
+  if(!track||!box)return;
+  const now=new Date().toISOString().slice(0,10);
+  const active=Object.entries(originNotices).filter(([,n])=>n&&n.active!==false&&(!n.effectiveDate||n.effectiveDate<=now)).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
+  const messages=active.map(([,n])=>[n.product,n.oldOrigin&&n.newOrigin? n.oldOrigin+' → '+n.newOrigin:'',n.effectiveDate?'적용 '+n.effectiveDate:'',n.scope&&n.scope!=='전 지점'?n.scope:'전 지점'].filter(Boolean).join(' · '));
+  const label=messages.length?messages.join('　　✦　　'):'현재 등록된 원산지 변경 공지가 없습니다.';
+  box.classList.toggle('empty',!messages.length);
+  const safe=noticeEsc(label);
+  track.innerHTML='<div class="origin-notice-group"><span class="origin-notice-item">'+safe+'</span></div><div class="origin-notice-group" aria-hidden="true"><span class="origin-notice-item">'+safe+'</span></div>';
+  track.style.setProperty('--notice-duration',Math.max(22,Math.min(70,label.length*.45))+'s');
+}
+function renderOriginNoticeAdminList(){
+  const el=document.getElementById('originNoticeAdminList');if(!el)return;
+  const rows=Object.entries(originNotices).sort((a,b)=>(b[1]?.createdAt||0)-(a[1]?.createdAt||0));
+  el.innerHTML=rows.length?rows.map(([id,n])=>'<div class="notice-admin-row"><div class="notice-admin-copy"><strong>'+noticeEsc(n.product)+'</strong> · '+noticeEsc(n.oldOrigin||'')+' → '+noticeEsc(n.newOrigin||'')+'<br>'+noticeEsc(n.effectiveDate||'적용일 미지정')+' · '+noticeEsc(n.scope||'전 지점')+' · '+(n.active===false?'숨김':'표시 중')+'</div><button class="btn btn-ghost btn-sm" type="button" onclick="toggleOriginNotice(\''+noticeEsc(id)+'\')">'+(n.active===false?'다시 표시':'숨기기')+'</button></div>').join(''):'<div style="font-size:12px;color:var(--text3)">등록된 공지가 없습니다.</div>';
+}
+async function saveOriginNotice(){
+  if(!db){toast('Firebase 연결을 확인해주세요','error');return;}
+  const product=document.getElementById('noticeProduct').value.trim(),oldOrigin=document.getElementById('noticeOld').value.trim(),newOrigin=document.getElementById('noticeNew').value.trim(),effectiveDate=document.getElementById('noticeDate').value,scope=document.getElementById('noticeScope').value;
+  if(!product||!oldOrigin||!newOrigin||!effectiveDate){toast('제품명, 변경 전·후 원산지, 적용일을 입력해주세요','error');return;}
+  try{await db.ref('originNotices').push({product,oldOrigin,newOrigin,effectiveDate,scope,active:true,createdAt:Date.now()});document.getElementById('noticeProduct').value='';document.getElementById('noticeOld').value='';document.getElementById('noticeNew').value='';document.getElementById('noticeDate').value='';toast('원산지 변경 공지가 등록되었습니다','success');}
+  catch(e){console.error(e);toast('공지 저장에 실패했습니다. Firebase 규칙을 확인해주세요','error');}
+}
+async function toggleOriginNotice(id){
+  const n=originNotices[id];if(!n)return;
+  try{await db.ref('originNotices/'+id+'/active').set(n.active===false);toast(n.active===false?'공지를 다시 표시합니다':'공지를 숨겼습니다','success');}
+  catch(e){toast('공지 변경에 실패했습니다. Firebase 규칙을 확인해주세요','error');}
+}
+
 function INIT() {
   const savedFb = getSavedFirebaseCfg();
   const fbCfg = savedFb || FB_CFG;
@@ -1522,6 +1606,7 @@ function INIT() {
     const app = existingApp ? existingApp : firebase.initializeApp(fbCfg, 'register-app');
     db = firebase.database(app);
     loadOriginList();
+    loadOriginNotices();
     db.ref('.info/connected').on('value', snap => {
       const ok = snap.val() === true;
       document.getElementById('syncDot').className = 'sync-dot ' + (ok ? 'ok' : 'err');
