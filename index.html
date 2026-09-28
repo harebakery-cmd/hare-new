@@ -1572,8 +1572,7 @@ function noticeEsc(s){return String(s||'').replace(/[&<>"']/g,ch=>({'&':'&amp;',
 function renderOriginNoticeTicker(){
   const track=document.getElementById('originNoticeTrack'), box=document.getElementById('originNotice');
   if(!track||!box)return;
-  const now=new Date().toISOString().slice(0,10);
-  const active=Object.entries(originNotices).filter(([,n])=>n&&n.active!==false&&(!n.effectiveDate||n.effectiveDate<=now)).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
+  const active=Object.entries(originNotices).filter(([,n])=>n&&n.active!==false).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
   const messages=active.map(([,n])=>[n.product,n.oldOrigin&&n.newOrigin? n.oldOrigin+' → '+n.newOrigin:'',n.effectiveDate?'적용 '+n.effectiveDate:'',n.scope&&n.scope!=='전 지점'?n.scope:'전 지점'].filter(Boolean).join(' · '));
   const label=messages.length?messages.join('　　✦　　'):'현재 등록된 원산지 변경 공지가 없습니다.';
   box.classList.toggle('empty',!messages.length);
