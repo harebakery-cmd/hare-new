@@ -1165,20 +1165,13 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
 
 <div class="card" id="originNoticeAdminCard">
   <div class="card-header">
-    <div class="card-title">📣 원산지 변경 공지<span class="card-badge" style="background:var(--accent2)">전광판</span></div>
-    <span style="font-size:11px;color:var(--text3)">등록된 공지는 신제품 등록 화면에 실시간 표시됩니다</span>
+    <div class="card-title">원산지 변경 공지</div>
+    <span style="font-size:11px;color:var(--text3)">한 줄 공지가 신제품 등록 화면에 표시됩니다</span>
   </div>
-  <div class="input-row">
-    <div class="fg"><label for="noticeProduct">제품명</label><input id="noticeProduct" maxlength="60" placeholder="예: 우유식빵"></div>
-    <div class="fg"><label for="noticeDate">적용일</label><input id="noticeDate" type="date"></div>
-  </div>
-  <div class="input-row">
-    <div class="fg"><label for="noticeOld">변경 전 원산지</label><input id="noticeOld" maxlength="100" placeholder="예: 우유(원유:국산)"></div>
-    <div class="fg"><label for="noticeNew">변경 후 원산지</label><input id="noticeNew" maxlength="100" placeholder="예: 우유(폴란드산)"></div>
-  </div>
-  <div class="input-row" style="align-items:end">
-    <div class="fg"><label for="noticeScope">적용 범위</label><select id="noticeScope"><option>전 지점</option><option>갤러리아점</option><option>둔산점</option><option>도안점</option><option>건양대병원점</option><option>유성점</option><option>둔곡점</option></select></div>
-    <button class="btn btn-primary btn-sm" type="button" onclick="saveOriginNotice()">공지 등록</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <label for="noticeMessage" style="white-space:nowrap;font-size:12px;font-weight:600">공지 문구</label>
+    <input id="noticeMessage" maxlength="180" style="flex:1;min-width:0;width:auto" placeholder="예: 우유식빵 원산지가 국산에서 폴란드산으로 변경됩니다.">
+    <button class="btn btn-primary btn-sm" type="button" onclick="saveOriginNotice()">등록</button>
   </div>
   <div class="notice-admin-list" id="originNoticeAdminList"><div style="font-size:12px;color:var(--text3)">공지 불러오는 중...</div></div>
 </div>
@@ -1575,7 +1568,7 @@ function renderOriginNoticeTicker(){
   const track=document.getElementById('originNoticeTrack'), box=document.getElementById('originNotice');
   if(!track||!box)return;
   const active=Object.entries(originNotices).filter(([,n])=>n&&n.active!==false).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
-  const messages=active.map(([,n])=>[n.product,n.oldOrigin&&n.newOrigin? n.oldOrigin+' → '+n.newOrigin:'',n.effectiveDate?'적용 '+n.effectiveDate:'',n.scope&&n.scope!=='전 지점'?n.scope:'전 지점'].filter(Boolean).join(' · '));
+  const messages=active.map(([,n])=>n.message||[n.product,n.oldOrigin&&n.newOrigin?n.oldOrigin+' → '+n.newOrigin:'',n.effectiveDate?'적용 '+n.effectiveDate:'',n.scope&&n.scope!=='전 지점'?n.scope:'전 지점'].filter(Boolean).join(' · '));
   const label=messages.length?messages.join('　　✦　　'):'현재 등록된 원산지 변경 공지가 없습니다.';
   box.classList.toggle('empty',!messages.length);
   const safe=noticeEsc(label);
@@ -1585,13 +1578,13 @@ function renderOriginNoticeTicker(){
 function renderOriginNoticeAdminList(){
   const el=document.getElementById('originNoticeAdminList');if(!el)return;
   const rows=Object.entries(originNotices).sort((a,b)=>(b[1]?.createdAt||0)-(a[1]?.createdAt||0));
-  el.innerHTML=rows.length?rows.map(([id,n])=>'<div class="notice-admin-row"><div class="notice-admin-copy"><strong>'+noticeEsc(n.product)+'</strong> · '+noticeEsc(n.oldOrigin||'')+' → '+noticeEsc(n.newOrigin||'')+'<br>'+noticeEsc(n.effectiveDate||'적용일 미지정')+' · '+noticeEsc(n.scope||'전 지점')+' · '+(n.active===false?'숨김':'표시 중')+'</div><button class="btn btn-ghost btn-sm" type="button" onclick="toggleOriginNotice(\''+noticeEsc(id)+'\')">'+(n.active===false?'다시 표시':'숨기기')+'</button></div>').join(''):'<div style="font-size:12px;color:var(--text3)">등록된 공지가 없습니다.</div>';
+  el.innerHTML=rows.length?rows.map(([id,n])=>'<div class="notice-admin-row"><div class="notice-admin-copy">'+noticeEsc(n.message||[n.product,n.oldOrigin&&n.newOrigin?n.oldOrigin+' → '+n.newOrigin:'',n.effectiveDate?'적용 '+n.effectiveDate:'',n.scope||'전 지점'].filter(Boolean).join(' · '))+' · '+(n.active===false?'숨김':'표시 중')+'</div><button class="btn btn-ghost btn-sm" type="button" onclick="toggleOriginNotice(\''+noticeEsc(id)+'\')">'+(n.active===false?'다시 표시':'숨기기')+'</button></div>').join(''):'<div style="font-size:12px;color:var(--text3)">등록된 공지가 없습니다.</div>';
 }
 async function saveOriginNotice(){
   if(!db){toast('Firebase 연결을 확인해주세요','error');return;}
-  const product=document.getElementById('noticeProduct').value.trim(),oldOrigin=document.getElementById('noticeOld').value.trim(),newOrigin=document.getElementById('noticeNew').value.trim(),effectiveDate=document.getElementById('noticeDate').value,scope=document.getElementById('noticeScope').value;
-  if(!product||!oldOrigin||!newOrigin||!effectiveDate){toast('제품명, 변경 전·후 원산지, 적용일을 입력해주세요','error');return;}
-  try{await db.ref('originNotices').push({product,oldOrigin,newOrigin,effectiveDate,scope,active:true,createdAt:Date.now()});document.getElementById('noticeProduct').value='';document.getElementById('noticeOld').value='';document.getElementById('noticeNew').value='';document.getElementById('noticeDate').value='';toast('원산지 변경 공지가 등록되었습니다','success');}
+  const message=document.getElementById('noticeMessage').value.trim();
+  if(!message){toast('공지 문구를 입력해주세요','error');document.getElementById('noticeMessage').focus();return;}
+  try{await db.ref('originNotices').push({message,active:true,createdAt:Date.now()});document.getElementById('noticeMessage').value='';toast('원산지 변경 공지가 등록되었습니다','success');}
   catch(e){console.error(e);toast('공지 저장에 실패했습니다. Firebase 규칙을 확인해주세요','error');}
 }
 async function toggleOriginNotice(id){
