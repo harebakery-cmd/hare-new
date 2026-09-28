@@ -776,6 +776,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
 .origin-notice-item::after{content:"✦";color:#f5c56b;margin-left:46px}
 .origin-notice:hover .origin-notice-track{animation-play-state:paused}
 .origin-notice.empty .origin-notice-track{animation:none;width:100%}
+.origin-notice.empty .origin-notice-group[aria-hidden="true"]{display:none}
 .origin-notice.empty .origin-notice-item{padding:0;color:rgba(255,255,255,.72);font-weight:500}
 .origin-notice.empty .origin-notice-item::after{display:none}
 @keyframes originNoticeMarquee{to{transform:translateX(-50%)}}
