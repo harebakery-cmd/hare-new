@@ -3104,8 +3104,7 @@ function renderOriginManager() {
     const value=row[0], entries=row[1], hidden=entries.every(function(e){return managedOriginHidden[e.key];});
     const imgs=Object.values(managedOriginLabelImages).filter(function(r){return r&&String(r.origin||'').trim()===String(value).trim();}).flatMap(function(r){return (Array.isArray(r.images)?r.images:[]).map(function(im){return Object.assign({},im,{variant:r.originLabelVariant||''});});});
     const thumbs=imgs.length?imgs.map(function(im){return '<a href="'+esc(im.src||'')+'" target="_blank" rel="noopener"><img src="'+esc(im.src||'')+'" alt="" title="'+esc(im.name||'원라벨')+'" style="width:42px;height:42px;object-fit:cover;border:1px solid var(--border);border-radius:5px"></a>';}).join(''):'<span style="font-size:11px;color:var(--text3)">연결된 원라벨 이미지 없음</span>';
-    const safe=JSON.stringify(value).replace(/</g,'\\u003c');
-    const btn='<button class="btn btn-ghost btn-sm" onclick="setOriginPhraseHidden('+safe+','+(!hidden)+')">'+(hidden?'복구':'숨김')+'</button>';
+    const btn='<button class="btn btn-ghost btn-sm" data-value="'+esc(value)+'" onclick="setOriginPhraseHidden(this.dataset.value,'+(!hidden)+')">'+(hidden?'복구':'숨김')+'</button>';
     return '<div style="padding:10px 0;border-bottom:1px solid var(--border);'+(hidden?'opacity:.6':'')+'"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:13px;flex:1">'+esc(value)+'</strong><span style="font-size:11px;color:var(--text3)">'+(hidden?'숨김':'사용 중')+' · 원라벨 '+imgs.length+'장</span>'+btn+'</div><div style="display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap">'+thumbs+'</div></div>';
   }).join('');
 }
