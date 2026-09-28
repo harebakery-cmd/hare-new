@@ -1163,7 +1163,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
       <button class="btn btn-ghost btn-sm" onclick="lockSettings()">🔒 잠금</button>
     </div>
 
-<div class="card" id="originManagerCard"><div class="card-header"><div class="card-title">원산지 표기 관리</div><button class="btn btn-ghost btn-sm" type="button" onclick="loadOriginManager()">새로고침</button></div><div style="font-size:12px;color:var(--text3);margin:-6px 0 12px">ㄱ→ㅎ 순 · 원라벨 이미지를 함께 확인합니다. 숨김 표기는 기존 제품 기록을 유지하고 신규 선택 목록에서만 제외됩니다.</div><input id="originManagerSearch" oninput="renderOriginManager()" placeholder="원산지 표기 검색" style="margin-bottom:10px"><div id="originManagerList"><div style="font-size:12px;color:var(--text3)">관리자 인증 후 불러옵니다.</div></div></div>
+<div class="card" id="originManagerCard"><div class="card-header"><div class="card-title">원산지 표기 관리</div><button class="btn btn-ghost btn-sm" type="button" onclick="loadOriginManager()">새로고침</button></div><div style="font-size:12px;color:var(--text3);margin:-6px 0 12px">ㄱ→ㅎ 순 · 원라벨 이미지를 함께 확인합니다. 숨김 표기는 기존 제품 기록을 유지하고 신규 선택 목록에서만 제외됩니다.</div><input id="originManagerSearch" oninput="originManagerResultsCollapsed=false;renderOriginManager()" placeholder="원산지 표기 검색" style="margin-bottom:10px"><div id="originManagerList"><div style="font-size:12px;color:var(--text3)">관리자 인증 후 불러옵니다.</div></div></div>
 <div class="card" id="originNoticeAdminCard">
   <div class="card-header">
     <div class="card-title">원산지 변경 공지</div>
@@ -1511,6 +1511,7 @@ let allergenConfirmed = false;
 let originImages = [null, null, null];
 let originList = [], originAllList = [];
 let managedOriginEntries = [], managedOriginHidden = {}, managedOriginLabelImages = {};
+let originManagerResultsCollapsed = false;
 const registrationOriginIds = ['origin1-text','origin2-text','origin3-text'];
 let registrationOriginChosen = {};
 let ingRows = [];
@@ -3100,13 +3101,18 @@ function renderOriginManager() {
   managedOriginEntries.forEach(function(e){if(!grouped.has(e.value))grouped.set(e.value,[]);grouped.get(e.value).push(e);});
   const rows=Array.from(grouped.entries()).sort(function(a,b){return a[0].localeCompare(b[0],'ko');}).filter(function(e){return !q||e[0].toLowerCase().includes(q);});
   if(!rows.length){box.innerHTML='<div style="font-size:12px;color:var(--text3);padding:10px 0">검색 결과가 없습니다.</div>';return;}
-  box.innerHTML=rows.map(function(row){
+  const rowHtml=rows.map(function(row){
     const value=row[0], entries=row[1], hidden=entries.every(function(e){return managedOriginHidden[e.key];});
     const imgs=Object.values(managedOriginLabelImages).filter(function(r){return r&&String(r.origin||'').trim()===String(value).trim();}).flatMap(function(r){return (Array.isArray(r.images)?r.images:[]).map(function(im){return Object.assign({},im,{variant:r.originLabelVariant||''});});});
     const thumbs=imgs.length?imgs.map(function(im){return '<a href="'+esc(im.src||'')+'" target="_blank" rel="noopener"><img src="'+esc(im.src||'')+'" alt="" title="'+esc(im.name||'원라벨')+'" style="width:42px;height:42px;object-fit:cover;border:1px solid var(--border);border-radius:5px"></a>';}).join(''):'<span style="font-size:11px;color:var(--text3)">연결된 원라벨 이미지 없음</span>';
     const btn='<button class="btn btn-ghost btn-sm" data-value="'+esc(value)+'" onclick="setOriginPhraseHidden(this.dataset.value,'+(!hidden)+')">'+(hidden?'복구':'숨김')+'</button> <button class="btn btn-danger btn-sm" data-value="'+esc(value)+'" onclick="deleteOriginPhrase(this.dataset.value)">삭제</button>';
     return '<div style="padding:10px 0;border-bottom:1px solid var(--border);'+(hidden?'opacity:.6':'')+'"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:13px;flex:1">'+esc(value)+'</strong><span style="font-size:11px;color:var(--text3)">'+(hidden?'숨김':'사용 중')+' · 원라벨 '+imgs.length+'장</span>'+btn+'</div><div style="display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap">'+thumbs+'</div></div>';
   }).join('');
+  box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0"><span style="font-size:12px;color:var(--text3)">검색 결과 '+rows.length+'개</span><button class="btn btn-ghost btn-sm" type="button" onclick="toggleOriginManagerResults()">'+(originManagerResultsCollapsed?'펼치기':'접기')+'</button></div>'+(originManagerResultsCollapsed?'':'<div>'+rowHtml+'</div>');
+}
+function toggleOriginManagerResults() {
+  originManagerResultsCollapsed=!originManagerResultsCollapsed;
+  renderOriginManager();
 }
 function setOriginPhraseHidden(value, hidden) {
   if(!db)return; const matches=managedOriginEntries.filter(function(e){return e.value===value;});
