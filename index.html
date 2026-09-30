@@ -3107,6 +3107,88 @@ function loadOriginManager() {
     managedOriginHidden = snaps[1].val() || {}; managedOriginLabelImages = snaps[2].val() || {}; renderOriginManager();
   }).catch(function(err){ if(box) box.innerHTML='<div style="font-size:12px;color:var(--danger)">데이터를 불러오지 못했습니다. Firebase 권한을 확인해주세요.</div>'; console.error(err); });
 }
+
+// Keep normalization and the key hash compatible with showcard/index.html.
+function normalizeManagedOriginLabel(value) {
+  return splitOriginEntries(String(value || '').trim().replace(/\s+/g, ' ')).join(', ');
+}
+function managedOriginLabelKey(value) {
+  const text = normalizeManagedOriginLabel(value).toLowerCase();
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 'k_' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+const originLabelUploads = new Set();
+function canUploadManagedOriginLabel() {
+  return !!db && document.getElementById('settingsContent')?.style.display === 'block';
+}
+function chooseManagedOriginLabelImages(value) {
+  if (!canUploadManagedOriginLabel()) { toast('설정 관리자 인증이 필요합니다', 'error'); return; }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/webp';
+  input.multiple = true;
+  input.hidden = true;
+  input.onchange = () => {
+    const files = Array.from(input.files || []);
+    input.remove();
+    uploadManagedOriginLabelImages(value, files);
+  };
+  input.oncancel = () => input.remove();
+  document.body.appendChild(input);
+  input.click();
+}
+async function uploadManagedOriginLabelImages(value, files) {
+  if (!files.length) return;
+  if (!canUploadManagedOriginLabel()) { toast('설정 관리자 인증이 필요합니다', 'error'); return; }
+  const origin = normalizeManagedOriginLabel(value), key = managedOriginLabelKey(value);
+  if (!origin || originLabelUploads.has(key)) return;
+  originLabelUploads.add(key);
+  renderOriginManager();
+  try {
+    if (files.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) {
+      throw new Error('JPG, PNG, WEBP 사진을 선택해주세요');
+    }
+    const ref = db.ref('origin_label_images/' + key);
+    const existing = (await ref.once('value')).val();
+    const count = Array.isArray(existing?.images) ? existing.images.length : 0;
+    if (count + files.length > 6) throw new Error('공통 원라벨은 최대 6장입니다. 현재 ' + count + '장, 추가 가능 ' + Math.max(0, 6 - count) + '장');
+    toast('사진을 압축하고 등록하는 중입니다', 'success');
+    const images = [];
+    for (const file of files) {
+      const uploadFile = await compressImageForUpload(file);
+      const form = new FormData();
+      form.append('file', uploadFile);
+      form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      form.append('folder', 'hare-allergen/origin-label');
+      const response = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: form });
+      const result = await response.json();
+      if (!response.ok || !result.secure_url) throw new Error(result.error?.message || '사진 업로드 실패');
+      images.push({ id: ref.push().key, name: uploadFile.name, src: result.secure_url });
+    }
+    if (!canUploadManagedOriginLabel()) throw new Error('설정이 잠겼습니다. 인증 후 다시 등록해주세요');
+    const saved = await ref.transaction(current => {
+      const previous = Array.isArray(current?.images) ? current.images : [];
+      if (previous.length + images.length > 6) return;
+      return { ...current, origin, originLabelVariant: '', images: [...previous, ...images], updatedAt: Date.now() };
+    }, undefined, false);
+    if (!saved.committed) throw new Error('다른 곳에서 사진이 추가되어 6장을 초과합니다. 새로고침 후 다시 확인해주세요');
+    managedOriginLabelImages[key] = saved.snapshot.val();
+    toast('사진이 등록되었습니다. 쇼카드 원라벨에서도 불러올 수 있습니다', 'success');
+  } catch (err) {
+    console.error(err);
+    toast('사진 등록 실패: ' + err.message, 'error');
+  } finally {
+    originLabelUploads.delete(key);
+    renderOriginManager();
+  }
+}
 function renderOriginManager() {
   const box=document.getElementById('originManagerList'); if(!box)return;
   const q=(document.getElementById('originManagerSearch')?.value||'').trim().toLowerCase(), grouped=new Map();
@@ -3115,12 +3197,13 @@ function renderOriginManager() {
   if(!rows.length){box.innerHTML='<div style="font-size:12px;color:var(--text3);padding:10px 0">검색 결과가 없습니다.</div>';return;}
   const rowHtml=rows.map(function(row){
     const value=row[0], entries=row[1], hidden=entries.every(function(e){return managedOriginHidden[e.key];});
-    const imgs=Object.values(managedOriginLabelImages).filter(function(r){return r&&String(r.origin||'').trim()===String(value).trim();}).flatMap(function(r){return (Array.isArray(r.images)?r.images:[]).map(function(im){return Object.assign({},im,{variant:r.originLabelVariant||''});});});
+    const imgs=Object.values(managedOriginLabelImages).filter(function(r){return r&&normalizeManagedOriginLabel(r.origin)===normalizeManagedOriginLabel(value);}).flatMap(function(r){return (Array.isArray(r.images)?r.images:[]).map(function(im){return Object.assign({},im,{variant:r.originLabelVariant||''});});});
     const thumbs=imgs.length?imgs.map(function(im){return '<a href="'+esc(im.src||'')+'" target="_blank" rel="noopener"><img src="'+esc(im.src||'')+'" alt="" title="'+esc(im.name||'원라벨')+'" style="width:42px;height:42px;object-fit:cover;border:1px solid var(--border);border-radius:5px"></a>';}).join(''):'<span style="font-size:11px;color:var(--text3)">연결된 원라벨 이미지 없음</span>';
-    const btn='<button class="btn btn-ghost btn-sm" data-value="'+esc(value)+'" onclick="setOriginPhraseHidden(this.dataset.value,'+(!hidden)+')">'+(hidden?'복구':'숨김')+'</button> <button class="btn btn-danger btn-sm" data-value="'+esc(value)+'" onclick="deleteOriginPhrase(this.dataset.value)">삭제</button>';
+    const uploading=originLabelUploads.has(managedOriginLabelKey(value));
+    const btn='<button type="button" class="btn btn-secondary btn-sm" data-value="'+esc(value)+'" onclick="chooseManagedOriginLabelImages(this.dataset.value)" '+(uploading?'disabled':'')+'>'+(uploading?'등록 중…':'사진 등록')+'</button> <button class="btn btn-ghost btn-sm" data-value="'+esc(value)+'" onclick="setOriginPhraseHidden(this.dataset.value,'+(!hidden)+')">'+(hidden?'복구':'숨김')+'</button> <button class="btn btn-danger btn-sm" data-value="'+esc(value)+'" onclick="deleteOriginPhrase(this.dataset.value)">삭제</button>';
     return '<div style="padding:10px 0;border-bottom:1px solid var(--border);'+(hidden?'opacity:.6':'')+'"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:13px;flex:1">'+esc(value)+'</strong><span style="font-size:11px;color:var(--text3)">'+(hidden?'숨김':'사용 중')+' · 원라벨 '+imgs.length+'장</span>'+btn+'</div><div style="display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap">'+thumbs+'</div></div>';
   }).join('');
-  box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0"><span style="font-size:12px;color:var(--text3)">검색 결과 '+rows.length+'개</span><button class="btn btn-ghost btn-sm" type="button" onclick="toggleOriginManagerResults()">'+(originManagerResultsCollapsed?'펼치기':'접기')+'</button></div>'+(originManagerResultsCollapsed?'':'<div>'+rowHtml+'</div>');
+  box.innerHTML='<p style="font-size:12px;color:var(--text3);line-height:1.6">사진 등록: JPG·PNG·WEBP, 공통 원라벨 최대 6장 · 자동 압축 후 파일당 5MB 이하. <a href="https://harebakery-cmd.github.io/showcard/" target="_blank" rel="noopener">쇼카드 원라벨</a>에서 같은 원산지의 제품을 추가하면 등록한 사진을 불러옵니다.</p><div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0"><span style="font-size:12px;color:var(--text3)">검색 결과 '+rows.length+'개</span><button class="btn btn-ghost btn-sm" type="button" onclick="toggleOriginManagerResults()">'+(originManagerResultsCollapsed?'펼치기':'접기')+'</button></div>'+(originManagerResultsCollapsed?'':'<div>'+rowHtml+'</div>');
 }
 function toggleOriginManagerResults() {
   originManagerResultsCollapsed=!originManagerResultsCollapsed;
@@ -3154,6 +3237,7 @@ function checkSettingsPw() {
     document.getElementById('settingsLock').style.display = 'none';
     document.getElementById('settingsContent').style.display = 'block';
     loadFirebaseSettingsInputs();
+    loadOriginManager();
     document.getElementById('settingsPwErr').style.display = 'none';
   } else {
     document.getElementById('settingsPwErr').style.display = 'block';
