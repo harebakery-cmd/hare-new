@@ -1118,7 +1118,7 @@ input.field-error,select.field-error{border-color:var(--danger)!important;box-sh
           <th style="width:150px">판매 점포</th>
           <th style="min-width:160px">원산지 (1-2-3순위)</th>
           <th>알레르기</th>
-          <th>등록일시</th>
+          <th id="historyDateHeading">등록일시</th>
           <th style="width:82px;text-align:center">수정/삭제</th>
           <th id="th-complete" style="width:56px;text-align:center;display:none">완료</th>
         </tr>
@@ -2489,6 +2489,20 @@ function getCompletedTimestamp(product) {
   return parseSavedDateTime(product && product.완료일시);
 }
 
+// Sort by the date shown in both the table and mobile cards, not the product ID.
+function getHistoryDateValue(product) {
+  return product.완료처리 && product.완료일시 ? product.완료일시 : product.등록일시;
+}
+
+function compareHistoryDates(a, b) {
+  const aTime = parseSavedDateTime(getHistoryDateValue(a));
+  const bTime = parseSavedDateTime(getHistoryDateValue(b));
+  if (aTime === null && bTime !== null) return 1;
+  if (bTime === null && aTime !== null) return -1;
+  if (aTime !== bTime) return bTime - aTime;
+  return String(a._id || '').localeCompare(String(b._id || ''));
+}
+
 // History retention is display-only. Product records are shared with the
 // allergen/origin systems and must never be deleted or modified for retention.
 function isExpiredCompletedHistory(product, now = new Date()) {
@@ -2513,11 +2527,7 @@ async function loadHistory() {
       return;
     }
     if (historyTab === 'uncategorized') historyTab = 'pending';
-    historyCache = Object.values(val).filter(isVisibleHistoryProduct).sort((a,b) => {
-      const ta = a._id ? a._id.replace('new_','') : '0';
-      const tb = b._id ? b._id.replace('new_','') : '0';
-      return parseInt(tb) - parseInt(ta);
-    });
+    historyCache = Object.values(val).filter(isVisibleHistoryProduct);
     filterHistory();
   } catch(e) {
     tbody.innerHTML = ''; empty.style.display = 'block';
@@ -2572,7 +2582,9 @@ function filterHistory() {
   const pending = normalHistory.filter(p => !p.완료처리);
   const done    = normalHistory.filter(p =>  p.완료처리);
   updateTabCounts(pending, done, uncategorized);
-  const filtered = historyTab === 'done' ? done : historyTab === 'uncategorized' ? uncategorized : pending;
+  const filtered = (historyTab === 'done' ? done : historyTab === 'uncategorized' ? uncategorized : pending)
+    .sort(compareHistoryDates);
+  document.getElementById('historyDateHeading').textContent = historyTab === 'done' ? '완료일시' : '등록일시';
 
   const tbody   = document.getElementById('historyBody');
   const empty   = document.getElementById('historyEmpty');
