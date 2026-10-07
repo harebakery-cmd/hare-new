@@ -624,6 +624,12 @@ input::placeholder,textarea::placeholder{color:#8a8a8a}
 .stag .dot,.atag .dot{width:7px;height:7px;background:#d4d4d4}
 .atag.on .dot{background:#fafafa}
 .stag.on .dot{box-shadow:0 0 0 2px rgba(10,10,10,.1)}
+/* 신제품 등록: 비선택을 기본으로, 선택한 점포만 검은색으로 표시 */
+#storeGrid .stag{background:#fff;color:#000;border-color:#d4d4d4}
+#storeGrid .stag:hover{background:#fff;color:#000;border-color:#000}
+#storeGrid .stag.on,#storeGrid .stag.on:hover{background:#000;color:#fff;border-color:#000}
+#storeGrid .stag .dot{background:#d4d4d4!important;box-shadow:none}
+#storeGrid .stag.on .dot{background:#fff!important}
 .custom-checkbox-wrap{
   min-height:40px;padding:8px 12px;border:1px solid var(--border);
   border-radius:18px;background:var(--surface)
@@ -2026,9 +2032,6 @@ function loadStores() {
       name: normalizeStoreName(s.name),
       color:s.color || DEFAULT_STORE_COLORS[s.name] || '#8ca58f'
     })).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
-    if (Object.keys(selectedStores).length === 0) {
-      stores.forEach(s => { selectedStores[s.name] = true; });
-    }
     renderStoreGrid('storeGrid', selectedStores);
     renderStoreGrid('editStoreGrid', editSelectedStores);
     renderStoreManageList();
@@ -2352,7 +2355,7 @@ function resetForm() {
   document.getElementById('fNote').value = '';
   ['origin1-text','origin2-text','origin3-text'].forEach(id => document.getElementById(id).value = '');
   registrationOriginChosen = {};
-  selectAllStores(selectedStores, 'storeGrid');
+  setStoreSelection(selectedStores, 'storeGrid', []);
   originImages = [null,null,null];
   for(let i=0;i<3;i++) {
     const s = document.getElementById('imgSlot'+i);
@@ -3595,3 +3598,4 @@ function toast(msg, type = 'success') {
 
 </body>
 </html>
+
